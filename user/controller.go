@@ -1,45 +1,86 @@
 package user
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"playgrounds.com/database"
+	"playgrounds.com/models"
+)
 
-var db *Database
+type User = models.User
 
-func init() {
-	db = NewDb()
+var db *database.Database
+
+func Setup(mongoUrl string, mongoDBName string) {
+	err := error(nil)
+	db, err = database.NewDb(mongoUrl, mongoDBName)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func GetAllUsers(ctx *gin.Context) {
-	ctx.JSON(200, db.GetAll())
+	data, err := db.GetAll()
+	if err != nil {
+		ctx.JSON(500, gin.H{"message": "error", "error": err.Error()})
+		return
+	}
+	ctx.JSON(200, data)
 }
 
 func GetUser(ctx *gin.Context) {
 	id := ctx.Param("id")
-	user := db.Get(id)
-	ctx.JSON(200, user)
+	user, err := db.Get(id)
+	if err != nil {
+		ctx.JSON(500, gin.H{"message": "error", "error": err.Error()})
+	} else if user == nil {
+		ctx.JSON(404, gin.H{"message": "not found", "id": id})
+	} else {
+		ctx.JSON(200, user)
+	}
 }
 
 func CreateUser(ctx *gin.Context) {
-	user := &User{}
-	ctx.Bind(user)
-	result := User{}
-	result.ID = "1" + user.Name
-	result.Name = user.Name
-	result.Email = user.Email
-	db.Create(result)
-	ctx.JSON(200, &result)
+	user := User{}
+	ctx.Bind(&user)
+	result, err := db.Create(user)
+	if err != nil {
+		respondToError(ctx, err)
+		return
+	}
+	ctx.JSON(201, result)
 }
 
 func UpdateUser(ctx *gin.Context) {
 	id := ctx.Param("id")
-	result := User{}
-	ctx.Bind(&result)
-	result.ID = id
-	db.Update(id, result)
+	user := User{}
+	ctx.Bind(&user)
+	user.ID = id
+	result, err := db.Update(id, user)
+	if err != nil {
+		ctx.JSON(500, gin.H{"message": "error", "error": "error updating user"})
+		return
+	}
 	ctx.JSON(200, &result)
 }
 
 func DeleteUser(ctx *gin.Context) {
 	id := ctx.Param("id")
-	db.Delete(id)
+	if err := db.Delete(id); err != nil {
+		ctx.JSON(500, gin.H{"message": "error", "error": "error deleting user"})
+		return
+	}
 	ctx.JSON(200, gin.H{"message": "delete", "id": id})
+}
+
+func respondToError(ctx *gin.Context, err error) {
+	switch err {
+	case nil:
+		return
+	case database.ErrInvalidId:
+		ctx.JSON(400, gin.H{"message": "invalid id", "error": err.Error()})
+	case database.ErrInvalidUser:
+		ctx.JSON(400, gin.H{"message": "invalid user", "error": err.Error()})
+	default:
+		ctx.JSON(500, gin.H{"message": "error", "error": err.Error()})
+	}
 }
