@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -44,8 +43,8 @@ func initCollections(db *mongo.Database) *collections {
 	col.users = db.Collection("Users")
 	col.Photos = db.Collection("Photos")
 
-	col.users.Indexes().CreateOne(context.Background(), mongo.IndexModel{
-		Keys: bson.D{{Key: "email", Value: 1}, {Key: "unique", Value: true}},
-	})
+	initUserSchema(col.users)
+	initPhotoSchema(col.Photos)
+
 	return col
 }
