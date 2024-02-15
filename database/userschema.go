@@ -11,14 +11,14 @@ import (
 )
 
 type UserDocument struct {
-	ID    primitive.ObjectID `bson:"_id"`
+	ID    primitive.ObjectID `bson:"_id,omitempty"`
 	Name  string             `bson:"name"`
 	Email string             `bson:"email"`
 }
 
 var ErrNoDocuments = mongo.ErrNoDocuments
-var ErrInvalidId = errors.New("Invalid ID")
-var ErrInvalidUser = errors.New("Invalid User")
+var ErrInvalidId = errors.New("invalid id")
+var ErrInvalidUser = errors.New("invalid user")
 
 func FromUserNoID(user *models.User) UserDocument {
 	return UserDocument{

@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	os.Setenv("MongoUrl", "mongodb://myUser:myPassword@localhost:27017/")
+	os.Setenv("MongoUrl", "mongodb://localhost:27017/")
 	os.Setenv("MongoDBName", "PhotoManager")
 
 	r := gin.Default()
