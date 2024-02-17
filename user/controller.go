@@ -51,10 +51,8 @@ func CreateUser(ctx *gin.Context) {
 }
 
 func UpdateUser(ctx *gin.Context) {
+	user := ctx.MustGet("user").(User)
 	id := ctx.Param("id")
-	user := User{}
-	ctx.Bind(&user)
-	user.ID = id
 	result, err := db.Update(id, user)
 	if err != nil {
 		ctx.JSON(500, gin.H{"message": "error", "error": "error updating user"})
@@ -70,6 +68,26 @@ func DeleteUser(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(200, gin.H{"message": "delete", "id": id})
+}
+
+func OmitFields(ctx *gin.Context) {
+	id := ctx.Param("id")
+	if id == "" {
+		ctx.JSON(400, gin.H{"message": "invalid id", "error": "id is required"})
+		return
+	}
+
+	user := User{}
+	ctx.Bind(&user)
+
+	user.ID = ""
+	user.Token = nil
+	user.TokenExpiry = nil
+
+	ctx.Set("user", user)
+	ctx.Set("id", id)
+
+	ctx.Next()
 }
 
 func respondToError(ctx *gin.Context, err error) {

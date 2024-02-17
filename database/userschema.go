@@ -11,39 +11,11 @@ import (
 	"playgrounds.com/models"
 )
 
-type UserDocument struct {
-	ID    primitive.ObjectID `bson:"_id,omitempty"`
-	Name  string             `bson:"name"`
-	Email string             `bson:"email"`
-}
-
 var ErrNoDocuments = mongo.ErrNoDocuments
 var ErrInvalidId = errors.New("invalid id")
 var ErrInvalidUser = errors.New("invalid user")
 
-func FromUserNoID(user *models.User) UserDocument {
-	return UserDocument{
-		Name:  user.Name,
-		Email: user.Email,
-	}
-}
-
-func FromUser(user *models.User) UserDocument {
-	id, _ := objectIdFromHex(user.ID)
-	return UserDocument{
-		ID:    id,
-		Name:  user.Name,
-		Email: user.Email,
-	}
-}
-
-func (u UserDocument) ToUser() models.User {
-	return models.User{
-		ID:    u.ID.Hex(),
-		Name:  u.Name,
-		Email: u.Email,
-	}
-}
+type User = models.User
 
 func (d *Database) GetAll() ([]models.User, error) {
 	ctx := context.Background()
@@ -52,14 +24,9 @@ func (d *Database) GetAll() ([]models.User, error) {
 		return nil, err
 	}
 
-	var users []models.User
-	for cursor.Next(ctx) {
-		var user UserDocument
-		err := cursor.Decode(&user)
-		if err != nil {
-			continue
-		}
-		users = append(users, user.ToUser())
+	var users []User
+	if err = cursor.All(ctx, &users); err != nil {
+		return nil, err
 	}
 
 	return users, nil
@@ -76,12 +43,12 @@ func (d *Database) Get(id string) (*models.User, error) {
 
 func (d *Database) Create(user models.User) (*models.User, error) {
 	ctx := context.Background()
-	insertedId, err := d.collections.users.InsertOne(ctx, FromUserNoID(&user))
+	insertResult, err := d.collections.users.InsertOne(ctx, &user)
 	if err != nil {
 		return nil, err
 	}
 
-	id := insertedId.InsertedID.(primitive.ObjectID)
+	id := insertResult.InsertedID.(primitive.ObjectID)
 	return d.getUserById(&ctx, id)
 }
 
@@ -92,15 +59,14 @@ func (d *Database) Update(id string, user models.User) (*models.User, error) {
 		return nil, ErrInvalidId
 	}
 
-	userDocument := UserDocument{}
+	var result User = User{}
 	filter := bson.D{{Key: "_id", Value: objID}}
-	err = d.collections.users.FindOneAndUpdate(ctx, filter, bson.D{{Key: "$set", Value: FromUser(&user)}}).Decode(&userDocument)
+	err = d.collections.users.FindOneAndUpdate(ctx, filter, bson.D{{Key: "$set", Value: &user}}).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
 
-	updatedUser := userDocument.ToUser()
-	return &updatedUser, nil
+	return &result, nil
 }
 
 func (d *Database) Delete(id string) error {
@@ -110,22 +76,19 @@ func (d *Database) Delete(id string) error {
 		return err
 	}
 	filter := bson.D{{Key: "_id", Value: objID}}
-	_, err = d.collections.users.DeleteOne(ctx, filter)
-	if err != nil {
+	if _, err = d.collections.users.DeleteOne(ctx, filter); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (d *Database) getUserById(ctx *context.Context, id primitive.ObjectID) (*models.User, error) {
-	userDocument := UserDocument{}
-	err := d.collections.users.FindOne(*ctx, bson.D{{Key: "_id", Value: id}}).Decode(&userDocument)
-	if err != nil {
+	user := User{}
+	if err := d.collections.users.FindOne(*ctx, bson.D{{Key: "_id", Value: id}}).Decode(&user); err != nil {
 		return nil, err
-	} else {
-		user := userDocument.ToUser()
-		return &user, nil
 	}
+
+	return &user, nil
 }
 
 func objectIdFromHex(id string) (primitive.ObjectID, error) {
