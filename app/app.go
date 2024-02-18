@@ -20,7 +20,7 @@ func main() {
 	environment.ApplyEnvironment(&fakeEnv)
 
 	env := environment.NewFromEnv()
-	db, err := database.NewDb(env.DatabaseName, env.DatabaseURL)
+	db, err := database.NewDb(env.DatabaseURL, env.DatabaseName)
 	authMiddleware := utils.AuthMiddleware(env.JWTSecret)
 
 	if err != nil {
