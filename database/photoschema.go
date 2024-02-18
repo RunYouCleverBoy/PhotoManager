@@ -10,7 +10,8 @@ import (
 	"playgrounds.com/models"
 )
 
-func initPhotoSchema(photos *mongo.Collection) {
+func initPhotoSchema(collection *PhotosCollection) {
+	photos := collection.Photos
 	ctx := context.Background()
 	photos.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys:    bson.D{{Key: "url", Value: 1}},
@@ -23,16 +24,20 @@ func initPhotoSchema(photos *mongo.Collection) {
 
 type PhotoModel = models.PhotoModel
 
-func (d *Database) CreatePhoto(photo models.PhotoModel) (*models.PhotoModel, error) {
+type PhotosCollection struct {
+	Photos *mongo.Collection
+}
+
+func (d *PhotosCollection) CreatePhoto(photo models.PhotoModel) (*models.PhotoModel, error) {
 	ctx := context.Background()
-	_, err := d.collections.Photos.InsertOne(ctx, photo)
+	_, err := d.Photos.InsertOne(ctx, photo)
 	if err != nil {
 		return nil, err
 	}
 	return &photo, nil
 }
 
-func (d *Database) GetPhotoById(id string) (*models.PhotoModel, error) {
+func (d *PhotosCollection) GetPhotoById(id string) (*models.PhotoModel, error) {
 	ctx := context.Background()
 	objID, err := objectIdFromHex(id)
 	if err != nil {
@@ -41,37 +46,37 @@ func (d *Database) GetPhotoById(id string) (*models.PhotoModel, error) {
 	return d.getPhotoById(&ctx, objID)
 }
 
-func (d *Database) UpdatePhoto(id string, photo models.PhotoModel) (*models.PhotoModel, error) {
+func (d *PhotosCollection) UpdatePhoto(id string, photo models.PhotoModel) (*models.PhotoModel, error) {
 	ctx := context.Background()
 	objID, err := objectIdFromHex(id)
 	if err != nil {
 		return nil, ErrInvalidId
 	}
 	filter := bson.D{{Key: "_id", Value: objID}}
-	_, err = d.collections.Photos.ReplaceOne(ctx, filter, photo)
+	_, err = d.Photos.ReplaceOne(ctx, filter, photo)
 	if err != nil {
 		return nil, err
 	}
 	return &photo, nil
 }
 
-func (d *Database) DeletePhoto(id string) error {
+func (d *PhotosCollection) DeletePhoto(id string) error {
 	ctx := context.Background()
 	objID, err := objectIdFromHex(id)
 	if err != nil {
 		return err
 	}
 	filter := bson.D{{Key: "_id", Value: objID}}
-	_, err = d.collections.Photos.DeleteOne(ctx, filter)
+	_, err = d.Photos.DeleteOne(ctx, filter)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *Database) getPhotoById(ctx *context.Context, id primitive.ObjectID) (*models.PhotoModel, error) {
+func (d *PhotosCollection) getPhotoById(ctx *context.Context, id primitive.ObjectID) (*models.PhotoModel, error) {
 	photo := PhotoModel{}
-	err := d.collections.Photos.FindOne(*ctx, bson.D{{Key: "_id", Value: id}}).Decode(&photo)
+	err := d.Photos.FindOne(*ctx, bson.D{{Key: "_id", Value: id}}).Decode(&photo)
 	if err != nil {
 		return nil, err
 	}

@@ -1,21 +1,44 @@
 package main
 
 import (
-	"os"
-
 	"github.com/gin-gonic/gin"
+	"playgrounds.com/auth"
+	"playgrounds.com/database"
+	"playgrounds.com/environment"
 	"playgrounds.com/user"
+	"playgrounds.com/utils"
 )
 
 func main() {
 
-	os.Setenv("MongoUrl", "mongodb://localhost:27017/")
-	os.Setenv("MongoDBName", "PhotoManager")
+	var fakeEnv environment.Environment = environment.Environment{
+		DatabaseURL:  "mongodb://localhost:27017/",
+		DatabaseName: "PhotoManager",
+		JWTSecret:    "Bolshoi bolshoi secret da",
+	}
+
+	environment.ApplyEnvironment(&fakeEnv)
+
+	env := environment.NewFromEnv()
+	db, err := database.NewDb(env.DatabaseName, env.DatabaseURL)
+	authMiddleware := utils.AuthMiddleware(env.JWTSecret)
+
+	if err != nil {
+		panic(err)
+	}
 
 	r := gin.Default()
 	api := r.Group("/api")
 	userApi := api.Group("/user")
-	user.Setup(os.Getenv("MongoUrl"), os.Getenv("MongoDBName"))
-	user.HandleRoutes(userApi)
+	user.Setup(db.UserCollection())
+	user.HandleRoutes(userApi, authMiddleware)
+
+	// photosApi := api.Group("/photos")
+	// photosApi.Setup(env, db.PhotoCollection())
+	// photosApi.HandleRoutes(photosApi)
+
+	authApi := api.Group("/auth")
+	auth.Setup(env)
+	auth.HandleRoutes(authApi)
 	r.Run(":8000")
 }

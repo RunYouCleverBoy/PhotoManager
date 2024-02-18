@@ -2,8 +2,11 @@ go 1.21.6
 
 use (
 	./app
+	./auth
 	./database
+	./environment
 	./models
+	./photos
 	./user
 	./utils
 )

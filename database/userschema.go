@@ -17,9 +17,13 @@ var ErrInvalidUser = errors.New("invalid user")
 
 type User = models.User
 
-func (d *Database) GetAll() ([]models.User, error) {
+type UserCollection struct {
+	users *mongo.Collection
+}
+
+func (d *UserCollection) GetAll() ([]models.User, error) {
 	ctx := context.Background()
-	cursor, err := d.collections.users.Find(ctx, bson.D{})
+	cursor, err := d.users.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +36,7 @@ func (d *Database) GetAll() ([]models.User, error) {
 	return users, nil
 }
 
-func (d *Database) Get(id string) (*models.User, error) {
+func (d *UserCollection) Get(id string) (*models.User, error) {
 	ctx := context.Background()
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -41,18 +45,26 @@ func (d *Database) Get(id string) (*models.User, error) {
 	return d.getUserById(&ctx, objID)
 }
 
-func (d *Database) Create(user models.User) (*models.User, error) {
+func (d *UserCollection) Create(user *models.User) (*models.User, error) {
 	ctx := context.Background()
-	insertResult, err := d.collections.users.InsertOne(ctx, &user)
+	insertResult, err := d.users.InsertOne(ctx, &user)
 	if err != nil {
 		return nil, err
+	}
+
+	if count, _ := d.users.EstimatedDocumentCount(ctx); count == 0 {
+		r := models.RoleAdmin
+		user.Role = &r
+	} else {
+		r := models.RoleUser
+		user.Role = &r
 	}
 
 	id := insertResult.InsertedID.(primitive.ObjectID)
 	return d.getUserById(&ctx, id)
 }
 
-func (d *Database) Update(id string, user models.User) (*models.User, error) {
+func (d *UserCollection) Update(id string, user *models.User) (*models.User, error) {
 	ctx := context.Background()
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -61,7 +73,7 @@ func (d *Database) Update(id string, user models.User) (*models.User, error) {
 
 	var result User = User{}
 	filter := bson.D{{Key: "_id", Value: objID}}
-	err = d.collections.users.FindOneAndUpdate(ctx, filter, bson.D{{Key: "$set", Value: &user}}).Decode(&result)
+	err = d.users.FindOneAndUpdate(ctx, filter, bson.D{{Key: "$set", Value: &user}}).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
@@ -69,22 +81,54 @@ func (d *Database) Update(id string, user models.User) (*models.User, error) {
 	return &result, nil
 }
 
-func (d *Database) Delete(id string) error {
+func (d *UserCollection) UpdateCredentials(id string, password *string, token *string, expiration *int64) (*models.User, error) {
+	ctx := context.Background()
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, ErrInvalidId
+	}
+
+	var result User = User{}
+	filter := bson.D{{Key: "_id", Value: objID}}
+	update := bson.D{{Key: "$set", Value: bson.D{
+		{Key: "password", Value: password},
+		{Key: "token", Value: token},
+		{Key: "token_expiry", Value: expiration},
+	}}}
+	err = d.users.FindOneAndUpdate(ctx, filter, update).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (d *UserCollection) Delete(id string) error {
 	ctx := context.Background()
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
 	}
 	filter := bson.D{{Key: "_id", Value: objID}}
-	if _, err = d.collections.users.DeleteOne(ctx, filter); err != nil {
+	if _, err = d.users.DeleteOne(ctx, filter); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *Database) getUserById(ctx *context.Context, id primitive.ObjectID) (*models.User, error) {
+func (d *UserCollection) getUserById(ctx *context.Context, id primitive.ObjectID) (*models.User, error) {
 	user := User{}
-	if err := d.collections.users.FindOne(*ctx, bson.D{{Key: "_id", Value: id}}).Decode(&user); err != nil {
+	if err := d.users.FindOne(*ctx, bson.D{{Key: "_id", Value: id}}).Decode(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (d *UserCollection) GetUserByEmail(email string) (*models.User, error) {
+	ctx := context.Background()
+	user := User{}
+	if err := d.users.FindOne(ctx, bson.D{{Key: "email", Value: email}}).Decode(&user); err != nil {
 		return nil, err
 	}
 
@@ -99,8 +143,8 @@ func objectIdFromHex(id string) (primitive.ObjectID, error) {
 	return objID, nil
 }
 
-func initUserSchema(collection *mongo.Collection) {
-	collection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+func initUserSchema(collection *UserCollection) {
+	collection.users.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys:    bson.D{{Key: "email", Value: 1}},
 		Options: options.Index().SetUnique(true),
 	})

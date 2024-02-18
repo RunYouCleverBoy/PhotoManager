@@ -7,15 +7,27 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Database struct {
-	client      *mongo.Client
-	db          *mongo.Database
-	collections *collections
+var database *databaseContext
+
+type databaseContext struct {
+	client *mongo.Client
 }
 
-type collections struct {
-	users  *mongo.Collection
-	Photos *mongo.Collection
+type Database struct {
+	db          *mongo.Database
+	collections *Collections
+}
+
+func (d *Database) UserCollection() *UserCollection {
+	return d.collections.users
+}
+func (d *Database) PhotosCollection() *PhotosCollection {
+	return d.collections.photos
+}
+
+type Collections struct {
+	users  *UserCollection
+	photos *PhotosCollection
 }
 
 func NewDb(url string, dbName string) (*Database, error) {
@@ -23,28 +35,30 @@ func NewDb(url string, dbName string) (*Database, error) {
 	clientOptions := options.Client().ApplyURI(url)
 	client, err := mongo.Connect(ctx, clientOptions)
 	db := client.Database(dbName)
+	database = &databaseContext{
+		client: client,
+	}
 	if err != nil {
 		return nil, err
 	}
 
 	return &Database{
-		client:      client,
 		db:          db,
 		collections: initCollections(db),
 	}, nil
 }
 
 func (d *Database) Close() {
-	d.client.Disconnect(context.Background())
+	database.client.Disconnect(context.Background())
 }
 
-func initCollections(db *mongo.Database) *collections {
-	col := &collections{}
-	col.users = db.Collection("Users")
-	col.Photos = db.Collection("Photos")
+func initCollections(db *mongo.Database) *Collections {
+	col := &Collections{}
+	col.users = &UserCollection{db.Collection("Users")}
+	col.photos = &PhotosCollection{db.Collection("Photos")}
 
 	initUserSchema(col.users)
-	initPhotoSchema(col.Photos)
+	initPhotoSchema(col.photos)
 
 	return col
 }
