@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"playgrounds.com/database"
 	"playgrounds.com/models"
 	"playgrounds.com/utils"
@@ -37,8 +38,14 @@ func GetAllUsers(ctx *gin.Context) {
 }
 
 func GetUser(ctx *gin.Context) {
-	id := ctx.Param("id")
-	user, err := db.Get(id)
+	idParam := ctx.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		ctx.JSON(400, gin.H{"message": "invalid id", "error": err.Error()})
+		return
+	}
+
+	user, err := db.Get(&id)
 	if err != nil {
 		ctx.JSON(500, gin.H{"message": "error", "error": err.Error()})
 	} else if user == nil {
@@ -68,8 +75,14 @@ func UpdateUser(ctx *gin.Context) {
 		ctx.Bind(&user)
 	}
 
-	id := ctx.Param("id")
-	result, err := db.Update(id, &user)
+	idParam := ctx.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		ctx.JSON(400, gin.H{"message": "invalid id", "error": err.Error()})
+		return
+	}
+
+	result, err := db.Update(&id, &user)
 	if err != nil {
 		respondToError(ctx, err)
 		return
@@ -78,8 +91,14 @@ func UpdateUser(ctx *gin.Context) {
 }
 
 func DeleteUser(ctx *gin.Context) {
-	id := ctx.Param("id")
-	if err := db.Delete(id); err != nil {
+	idParam := ctx.Param("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		ctx.JSON(400, gin.H{"message": "invalid id", "error": err.Error()})
+		return
+	}
+
+	if err := db.Delete(&id); err != nil {
 		respondToError(ctx, err)
 		return
 	}
@@ -109,7 +128,7 @@ func omitFields(ctx *gin.Context) {
 	user := User{}
 	ctx.Bind(&user)
 
-	user.ID = ""
+	user.ID = primitive.ObjectID{}
 	user.Token = nil
 	user.TokenExpiry = nil
 	user.Role = nil
@@ -122,7 +141,7 @@ func omitFields(ctx *gin.Context) {
 
 func selfService(ctx *gin.Context) {
 	user := ctx.MustGet(CallingUserContextKey).(User)
-	id := user.ID
+	id := &user.ID
 	switch ctx.Request.Method {
 	case "GET":
 		ctx.JSON(200, user)
@@ -145,8 +164,8 @@ func selfService(ctx *gin.Context) {
 }
 
 func getCurrentUser(ctx *gin.Context) {
-	id := ctx.MustGet("callingUserId").(string)
-	user, err := db.Get(id)
+	id := ctx.MustGet(CallingUserContextKey).(primitive.ObjectID)
+	user, err := db.Get(&id)
 	if err != nil {
 		respondToError(ctx, err)
 		ctx.Abort()

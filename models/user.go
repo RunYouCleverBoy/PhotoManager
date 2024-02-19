@@ -1,5 +1,9 @@
 package models
 
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
 const (
 	RoleAdmin Role = "admin"
 	RoleUser  Role = "user"
@@ -8,11 +12,11 @@ const (
 type Role string
 
 type User struct {
-	ID          string  `json:"id" bson:"id, omitempty"`
-	Name        string  `json:"name" bson:"name"`
-	Email       string  `json:"email" bson:"email"`
-	Password    string  `json:"password" bson:"password, omitempty"`
-	Token       *string `json:"token" bson:"token, omitempty"`
-	TokenExpiry *int64  `json:"token_expiry" bson:"token_expiry, omitempty"`
-	Role        *Role   `json:"role" bson:"role, omitempty"`
+	ID          primitive.ObjectID `json:"id" bson:"_id, omitempty"`
+	Name        string             `json:"name" bson:"name"`
+	Email       string             `json:"email" bson:"email"`
+	Password    string             `json:"password" bson:"password, omitempty"`
+	Token       *string            `json:"token" bson:"token, omitempty"`
+	TokenExpiry *int64             `json:"token_expiry" bson:"token_expiry, omitempty"`
+	Role        *Role              `json:"role" bson:"role, omitempty"`
 }

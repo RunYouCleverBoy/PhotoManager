@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 	"playgrounds.com/database"
 	"playgrounds.com/environment"
@@ -44,7 +45,7 @@ func login(ctx *gin.Context) {
 	}
 
 	expiration := authClaims.Expiration.Unix()
-	userObj, err = user.UpdateToken(&userObj.ID, token, expiration)
+	userObj, err = user.UpdateCredentials(&userObj.ID, token, expiration)
 	if err != nil {
 		respondToError(ctx, err)
 		return
@@ -62,6 +63,16 @@ func register(ctx *gin.Context) {
 		return
 	}
 	userObj.Password = string(hashedPassword)
+	userObj.ID = primitive.NewObjectID()
+	token, authClaims, err := createToken(&userObj)
+	if err != nil {
+		respondToError(ctx, err)
+		return
+	}
+
+	expiration := authClaims.Expiration.Unix()
+	userObj.TokenExpiry = &expiration
+	userObj.Token = token
 
 	// Create the user
 	responseUser, createErr := user.CreateUserByUserObject(&userObj)
@@ -75,6 +86,14 @@ func register(ctx *gin.Context) {
 }
 
 func logout(ctx *gin.Context) {
+	objIdValue, exists := ctx.Get(utils.CallingUserIdContextKey)
+	if !exists {
+		ctx.JSON(400, gin.H{"message": "invalid id", "error": "Invalid JWT"})
+		return
+	}
+
+	id := objIdValue.(primitive.ObjectID)
+	user.UpdateCredentials(&id, nil, 0)
 	ctx.JSON(200, gin.H{"message": "logout"})
 }
 
@@ -89,8 +108,9 @@ func respondToError(ctx *gin.Context, err error) {
 func createToken(user *user.User) (*string, *utils.AuthClaims, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	authClaims := utils.AuthClaims{}
-	authClaims.Id = user.ID
-	authClaims.Expiration = time.Now().Add(time.Hour * 24 * 90)
+	authClaims.Id = &user.ID
+	expiration := time.Now().Add(time.Hour * 24 * 90)
+	authClaims.Expiration = &expiration
 	authClaims.ApplyClaims(token)
 	tokenString, err := signFunc(token)
 	if err != nil {

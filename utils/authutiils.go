@@ -14,6 +14,12 @@ var (
 	ErrorBadToken     = errors.New("bad token")
 )
 
+const (
+	CallingUserIdContextKey = "callingUserId"
+	AuthClaimsContextKey    = "authClaims"
+	JwtTokenContextKey      = "jwtToken"
+)
+
 func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 	validateJWT := func(token string, secret []byte) (*jwt.Token, error) {
 		return jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
@@ -40,9 +46,9 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set("callingUserId", authClaims.Id)
-		ctx.Set("authClaims", authClaims)
-		ctx.Set("jwtToken", jwtToken)
+		ctx.Set(CallingUserIdContextKey, authClaims.Id)
+		ctx.Set(AuthClaimsContextKey, authClaims)
+		ctx.Set(JwtTokenContextKey, jwtToken)
 		ctx.Next()
 	}
 }

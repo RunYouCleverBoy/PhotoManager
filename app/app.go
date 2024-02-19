@@ -39,6 +39,6 @@ func main() {
 
 	authApi := api.Group("/auth")
 	auth.Setup(env)
-	auth.HandleRoutes(authApi)
+	auth.HandleRoutes(authApi, authMiddleware)
 	r.Run(":8000")
 }

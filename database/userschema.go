@@ -36,22 +36,13 @@ func (d *UserCollection) GetAll() ([]models.User, error) {
 	return users, nil
 }
 
-func (d *UserCollection) Get(id string) (*models.User, error) {
+func (d *UserCollection) Get(id *primitive.ObjectID) (*models.User, error) {
 	ctx := context.Background()
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, ErrInvalidId
-	}
-	return d.getUserById(&ctx, objID)
+	return d.getUserById(&ctx, id)
 }
 
 func (d *UserCollection) Create(user *models.User) (*models.User, error) {
 	ctx := context.Background()
-	insertResult, err := d.users.InsertOne(ctx, &user)
-	if err != nil {
-		return nil, err
-	}
-
 	if count, _ := d.users.EstimatedDocumentCount(ctx); count == 0 {
 		r := models.RoleAdmin
 		user.Role = &r
@@ -60,20 +51,26 @@ func (d *UserCollection) Create(user *models.User) (*models.User, error) {
 		user.Role = &r
 	}
 
-	id := insertResult.InsertedID.(primitive.ObjectID)
-	return d.getUserById(&ctx, id)
-}
-
-func (d *UserCollection) Update(id string, user *models.User) (*models.User, error) {
-	ctx := context.Background()
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, ErrInvalidId
+	if user.ID.IsZero() {
+		id := primitive.NewObjectID()
+		user.ID = id
 	}
 
+	insertResult, err := d.users.InsertOne(ctx, &user)
+	if err != nil {
+		return nil, err
+	}
+
+	objectId := insertResult.InsertedID.(primitive.ObjectID)
+	return d.getUserById(&ctx, &objectId)
+}
+
+func (d *UserCollection) Update(id *primitive.ObjectID, user *models.User) (*models.User, error) {
+	ctx := context.Background()
+
 	var result User = User{}
-	filter := bson.D{{Key: "_id", Value: objID}}
-	err = d.users.FindOneAndUpdate(ctx, filter, bson.D{{Key: "$set", Value: &user}}).Decode(&result)
+	filter := bson.D{{Key: "_id", Value: *id}}
+	err := d.users.FindOneAndUpdate(ctx, filter, bson.D{{Key: "$set", Value: &user}}).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
@@ -81,21 +78,17 @@ func (d *UserCollection) Update(id string, user *models.User) (*models.User, err
 	return &result, nil
 }
 
-func (d *UserCollection) UpdateCredentials(id string, password *string, token *string, expiration *int64) (*models.User, error) {
+func (d *UserCollection) UpdateCredentials(id *primitive.ObjectID, password *string, token *string, expiration *int64) (*models.User, error) {
 	ctx := context.Background()
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, ErrInvalidId
-	}
 
 	var result User = User{}
-	filter := bson.D{{Key: "_id", Value: objID}}
+	filter := bson.D{{Key: "_id", Value: id}}
 	update := bson.D{{Key: "$set", Value: bson.D{
 		{Key: "password", Value: password},
 		{Key: "token", Value: token},
 		{Key: "token_expiry", Value: expiration},
 	}}}
-	err = d.users.FindOneAndUpdate(ctx, filter, update).Decode(&result)
+	err := d.users.FindOneAndUpdate(ctx, filter, update).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
@@ -103,20 +96,16 @@ func (d *UserCollection) UpdateCredentials(id string, password *string, token *s
 	return &result, nil
 }
 
-func (d *UserCollection) Delete(id string) error {
+func (d *UserCollection) Delete(id *primitive.ObjectID) error {
 	ctx := context.Background()
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return err
-	}
-	filter := bson.D{{Key: "_id", Value: objID}}
-	if _, err = d.users.DeleteOne(ctx, filter); err != nil {
+	filter := bson.D{{Key: "_id", Value: id}}
+	if _, err := d.users.DeleteOne(ctx, filter); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *UserCollection) getUserById(ctx *context.Context, id primitive.ObjectID) (*models.User, error) {
+func (d *UserCollection) getUserById(ctx *context.Context, id *primitive.ObjectID) (*models.User, error) {
 	user := User{}
 	if err := d.users.FindOne(*ctx, bson.D{{Key: "_id", Value: id}}).Decode(&user); err != nil {
 		return nil, err
