@@ -108,6 +108,10 @@ func DeleteUser(ctx *gin.Context) {
 func restrictTo(roles ...Role) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
 		requestingUser := ctx.MustGet(CallingUserContextKey).(User)
+		if *requestingUser.Role == RoleAdmin {
+			ctx.Next()
+		}
+
 		isInRole := slices.Contains(roles, *requestingUser.Role)
 		if !isInRole {
 			ctx.JSON(403, gin.H{"message": "forbidden", "error": "insufficient permissions"})
