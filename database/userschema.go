@@ -83,11 +83,17 @@ func (d *UserCollection) UpdateCredentials(id *primitive.ObjectID, password *str
 
 	var result User = User{}
 	filter := bson.D{{Key: "_id", Value: id}}
-	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "password", Value: password},
-		{Key: "token", Value: token},
-		{Key: "token_expiry", Value: expiration},
-	}}}
+	updates := bson.D{}
+	if password != nil {
+		updates = append(updates, bson.E{Key: "password", Value: *password})
+	}
+	if token != nil {
+		updates = append(updates, bson.E{Key: "token", Value: *token})
+	}
+	if expiration != nil {
+		updates = append(updates, bson.E{Key: "token_expiry", Value: *expiration})
+	}
+	update := bson.D{{Key: "$set", Value: updates}}
 	err := d.users.FindOneAndUpdate(ctx, filter, update).Decode(&result)
 	if err != nil {
 		return nil, err

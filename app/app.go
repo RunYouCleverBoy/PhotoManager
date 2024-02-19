@@ -14,14 +14,14 @@ func main() {
 	var fakeEnv environment.Environment = environment.Environment{
 		DatabaseURL:  "mongodb://localhost:27017/",
 		DatabaseName: "PhotoManager",
-		JWTSecret:    "Bolshoi bolshoi secret da",
+		JWTSecret:    []byte("Sittin' in the stand of the sports arena, waiting for the show to begin Red lights, green lights, strawberry wine, a good friend of mine, follows the stars Venus and Mars are alright tonight"),
 	}
 
 	environment.ApplyEnvironment(&fakeEnv)
 
 	env := environment.NewFromEnv()
 	db, err := database.NewDb(env.DatabaseURL, env.DatabaseName)
-	authMiddleware := utils.AuthMiddleware(env.JWTSecret)
+	authMiddleware := utils.AuthMiddleware(&env.JWTSecret)
 
 	if err != nil {
 		panic(err)

@@ -20,7 +20,7 @@ const (
 	JwtTokenContextKey      = "jwtToken"
 )
 
-func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
+func AuthMiddleware(jwtSecret *[]byte) gin.HandlerFunc {
 	validateJWT := func(token string, secret []byte) (*jwt.Token, error) {
 		return jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 			return secret, nil
@@ -33,7 +33,7 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 			return
 		}
 
-		jwtToken, err := validateJWT(token, []byte(jwtSecret))
+		jwtToken, err := validateJWT(token, *jwtSecret)
 		if err != nil {
 			ctx.AbortWithError(401, err)
 			return

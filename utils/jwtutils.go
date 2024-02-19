@@ -12,10 +12,13 @@ type AuthClaims struct {
 	Expiration *time.Time
 }
 
-func (authClaims *AuthClaims) ApplyClaims(token *jwt.Token) {
-	claims := token.Claims.(jwt.MapClaims)
-	claims["id"] = authClaims.Id.Hex()
-	claims["exp"] = authClaims.Expiration
+func (authClaims *AuthClaims) NewUnsignedToken(issueLeeway time.Duration) *jwt.Token {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":  authClaims.Id.Hex(),
+		"exp": authClaims.Expiration.Unix(),
+		"iat": time.Now().Add(-issueLeeway).Unix(),
+	})
+	return token
 }
 
 func (authClaims *AuthClaims) Parse(token *jwt.Token) error {
@@ -30,7 +33,8 @@ func (authClaims *AuthClaims) Parse(token *jwt.Token) error {
 		return jwt.ValidationError{}
 	}
 	authClaims.Id = &id
-	expiration := claims["exp"].(time.Time)
+	expirationUnix := claims["exp"].(int64)
+	expiration := time.Unix(expirationUnix, 0)
 	authClaims.Expiration = &expiration
 
 	if authClaims.Id.IsZero() {

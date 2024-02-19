@@ -17,16 +17,22 @@ var signFunc func(token *jwt.Token) (string, error) = nil
 
 func Setup(env *environment.Environment) {
 	signFunc = func(token *jwt.Token) (string, error) {
-		return token.SignedString([]byte(env.JWTSecret))
+		return token.SignedString(env.JWTSecret)
 	}
 }
 
 func login(ctx *gin.Context) {
 	requestBody := struct {
-		Username string `json:"username"`
+		Username string `json:"email"`
 		Password string `json:"password"`
 	}{}
+
 	ctx.Bind(&requestBody)
+	if requestBody.Username == "" || requestBody.Password == "" {
+		ctx.JSON(400, gin.H{"message": "invalid request", "error": "missing email or password"})
+		return
+	}
+
 	userObj, err := user.GetUserByEmail(requestBody.Username)
 	if err != nil {
 		respondToError(ctx, err)
@@ -45,7 +51,7 @@ func login(ctx *gin.Context) {
 	}
 
 	expiration := authClaims.Expiration.Unix()
-	userObj, err = user.UpdateCredentials(&userObj.ID, token, expiration)
+	userObj, err = user.UpdateCredentials(&userObj.ID, &userObj.Password, token, &expiration)
 	if err != nil {
 		respondToError(ctx, err)
 		return
@@ -93,7 +99,9 @@ func logout(ctx *gin.Context) {
 	}
 
 	id := objIdValue.(primitive.ObjectID)
-	user.UpdateCredentials(&id, nil, 0)
+	emptyString := ""
+	zero := int64(0)
+	user.UpdateCredentials(&id, nil, &emptyString, &zero)
 	ctx.JSON(200, gin.H{"message": "logout"})
 }
 
@@ -106,15 +114,15 @@ func respondToError(ctx *gin.Context, err error) {
 }
 
 func createToken(user *user.User) (*string, *utils.AuthClaims, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
 	authClaims := utils.AuthClaims{}
 	authClaims.Id = &user.ID
 	expiration := time.Now().Add(time.Hour * 24 * 90)
 	authClaims.Expiration = &expiration
-	authClaims.ApplyClaims(token)
+	token := authClaims.NewUnsignedToken(time.Second * 30)
 	tokenString, err := signFunc(token)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return &tokenString, &authClaims, nil
 }
