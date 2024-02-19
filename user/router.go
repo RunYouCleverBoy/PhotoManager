@@ -14,6 +14,6 @@ func HandleRoutes(router *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
 	router.DELETE("/:id", restrictTo(RoleAdmin), DeleteUser)
 
 	router.GET("/me", restrictTo(RoleUser), selfService)
-	router.PUT("/me", restrictTo(RoleUser), selfService)
+	router.PUT("/me", restrictTo(RoleUser), omitFields, selfService)
 	router.DELETE("/me", restrictTo(RoleUser), selfService)
 }

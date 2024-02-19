@@ -125,23 +125,18 @@ func restrictTo(roles ...Role) func(ctx *gin.Context) {
 }
 
 func omitFields(ctx *gin.Context) {
-	id := ctx.Param("id")
-	if id == "" {
-		ctx.JSON(400, gin.H{"message": "invalid id", "error": "id is required"})
-		return
-	}
+	recover()
 
-	user := User{}
+	user := models.User{}
 	ctx.Bind(&user)
 
-	user.ID = primitive.ObjectID{}
+	user.ID = primitive.NilObjectID
+	user.Email = ""
 	user.Token = nil
 	user.TokenExpiry = nil
 	user.Role = nil
 
 	ctx.Set(SubjectUserContextKey, user)
-	ctx.Set("id", id)
-
 	ctx.Next()
 }
 
@@ -152,9 +147,15 @@ func selfService(ctx *gin.Context) {
 	case "GET":
 		ctx.JSON(200, user)
 	case "PUT":
-		user := User{}
-		ctx.Bind(&user)
-		result, err := db.Update(id, &user)
+		var updateStruct User
+		if update, exists := ctx.Get(SubjectUserContextKey); exists {
+			updateStruct = update.(User)
+		} else {
+			ctx.JSON(500, gin.H{"message": "error", "BUG": "no data to update"})
+			return
+		}
+
+		result, err := db.Update(id, &updateStruct)
 		if err != nil {
 			respondToError(ctx, err)
 			return
