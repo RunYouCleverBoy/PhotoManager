@@ -19,6 +19,7 @@ const (
 
 const CallingUserContextKey = "CallingUser"
 const SubjectUserContextKey = "SubjectUser"
+const CallingUserIdContextKey = utils.CallingUserIdContextKey
 
 type Role = models.Role
 
@@ -110,6 +111,7 @@ func restrictTo(roles ...Role) func(ctx *gin.Context) {
 		requestingUser := ctx.MustGet(CallingUserContextKey).(User)
 		if *requestingUser.Role == RoleAdmin {
 			ctx.Next()
+			return
 		}
 
 		isInRole := slices.Contains(roles, *requestingUser.Role)
@@ -168,14 +170,14 @@ func selfService(ctx *gin.Context) {
 }
 
 func getCurrentUser(ctx *gin.Context) {
-	id := ctx.MustGet(CallingUserContextKey).(primitive.ObjectID)
+	id := ctx.MustGet(CallingUserIdContextKey).(primitive.ObjectID)
 	user, err := db.Get(&id)
 	if err != nil {
 		respondToError(ctx, err)
 		ctx.Abort()
 		return
 	}
-	ctx.Set(CallingUserContextKey, user)
+	ctx.Set(CallingUserContextKey, *user)
 	ctx.Next()
 }
 

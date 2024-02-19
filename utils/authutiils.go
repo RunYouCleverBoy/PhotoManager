@@ -46,7 +46,7 @@ func AuthMiddleware(jwtSecret *[]byte) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set(CallingUserIdContextKey, authClaims.Id)
+		ctx.Set(CallingUserIdContextKey, *authClaims.Id)
 		ctx.Set(AuthClaimsContextKey, authClaims)
 		ctx.Set(JwtTokenContextKey, jwtToken)
 		ctx.Next()

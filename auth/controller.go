@@ -57,7 +57,7 @@ func login(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, gin.H{"token": userObj})
+	ctx.JSON(200, gin.H{"user": userObj})
 }
 
 func register(ctx *gin.Context) {

@@ -33,7 +33,7 @@ func (authClaims *AuthClaims) Parse(token *jwt.Token) error {
 		return jwt.ValidationError{}
 	}
 	authClaims.Id = &id
-	expirationUnix := claims["exp"].(int64)
+	expirationUnix := int64(claims["exp"].(float64))
 	expiration := time.Unix(expirationUnix, 0)
 	authClaims.Expiration = &expiration
 
