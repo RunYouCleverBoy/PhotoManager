@@ -5,6 +5,7 @@ import (
 	"playgrounds.com/auth"
 	"playgrounds.com/database"
 	"playgrounds.com/environment"
+	"playgrounds.com/photos"
 	"playgrounds.com/user"
 	"playgrounds.com/utils"
 )
@@ -33,9 +34,9 @@ func main() {
 	user.Setup(db.UserCollection())
 	user.HandleRoutes(userApi, authMiddleware)
 
-	// photosApi := api.Group("/photos")
-	// photosApi.Setup(env, db.PhotoCollection())
-	// photosApi.HandleRoutes(photosApi)
+	photosApi := api.Group("/photos")
+	photos.Setup(db.PhotosCollection())
+	photos.HandleRoutes(photosApi)
 
 	authApi := api.Group("/auth")
 	auth.Setup(env)

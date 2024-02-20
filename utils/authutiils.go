@@ -53,6 +53,11 @@ func AuthMiddleware(jwtSecret *[]byte) gin.HandlerFunc {
 	}
 }
 
+func CollectDataFromAuthentication(ctx *gin.Context) (id *string) {
+	id = ctx.MustGet(CallingUserIdContextKey).(*string)
+	return id
+}
+
 func extractBearerToken(ctx *gin.Context) (string, error) {
 	header := ctx.GetHeader("Authorization")
 	if header == "" {

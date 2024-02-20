@@ -3,11 +3,18 @@ package photos
 import (
 	"github.com/gin-gonic/gin"
 	"playgrounds.com/database"
-	"playgrounds.com/environment"
+	"playgrounds.com/utils"
 )
 
-func GetAllPhotos(c *gin.Context) {
-	// TODO
+var db *database.PhotosCollection
+
+func Setup(collection *database.PhotosCollection) {
+	db = collection
+}
+
+func GetAllMyPhotos(c *gin.Context) {
+	userId := utils.CollectDataFromAuthentication(c)
+	photos, err := db.GetPhotoById()
 }
 
 func GetPhoto(c *gin.Context) {
@@ -23,10 +30,6 @@ func UpdatePhoto(c *gin.Context) {
 }
 
 func DeletePhoto(c *gin.Context) {
-	// TODO
-}
-
-func Setup(env environment.Environment, collection *database.PhotosCollection) {
 	// TODO
 }
 
