@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"playgrounds.com/models"
+	"playgrounds.com/utils"
 )
 
 func initPhotoSchema(collection *PhotosCollection) {
@@ -37,16 +38,9 @@ func (d *PhotosCollection) CreatePhoto(photo models.PhotoModel) (*models.PhotoMo
 	return &photo, nil
 }
 
-func (d *PhotosCollection) GetPhotos(callerObjectId *primitive.ObjectID, searchCriteria *models.PhotoSearchOptions) ([]models.PhotoModel, error) {
-	visibilityCriteria := bson.D{{Key: "$or", Value: []bson.D{
-		{{Key: "is_public", Value: true}},
-		{{Key: "visible_to", Value: callerObjectId}},
-		{{Key: "owner", Value: callerObjectId}},
-	}}}
-
-	filter := bson.D{{Key: "$and", Value: []bson.D{visibilityCriteria, *photoSearchCriteriaFromOptions(callerObjectId, searchCriteria)}}}
+func (d *PhotosCollection) GetPhotosByUserId(userId *primitive.ObjectID) ([]models.PhotoModel, error) {
 	ctx := context.Background()
-	cursor, err := d.Photos.Find(ctx, filter)
+	cursor, err := d.Photos.Find(ctx, bson.D{{Key: "owner", Value: *userId}})
 	if err != nil {
 		return nil, err
 	}
@@ -63,23 +57,46 @@ func (d *PhotosCollection) GetPhotos(callerObjectId *primitive.ObjectID, searchC
 	return photos, nil
 }
 
-func (d *PhotosCollection) GetPhotoById(id string) (*models.PhotoModel, error) {
+func (d *PhotosCollection) GetPhotos(callerObjectId *primitive.ObjectID, searchCriteria *models.PhotoSearchOptions, indexRange *utils.IntRange) ([]models.PhotoModel, error) {
+	visibilityCriteria := bson.D{{Key: "$or", Value: []bson.D{
+		{{Key: "is_public", Value: true}},
+		{{Key: "visible_to", Value: callerObjectId}},
+		{{Key: "owner", Value: callerObjectId}},
+	}}}
+
+	filter := bson.D{{Key: "$and", Value: []bson.D{visibilityCriteria, *photoSearchCriteriaFromOptions(callerObjectId, searchCriteria)}}}
 	ctx := context.Background()
-	objID, err := objectIdFromHex(id)
+	options := options.Find()
+	if !indexRange.IsNullOrEmpty() {
+		options = options.SetSkip(int64(indexRange.Start())).SetLimit(int64(indexRange.Length()))
+	}
+
+	cursor, err := d.Photos.Find(ctx, filter, options)
 	if err != nil {
 		return nil, err
 	}
-	return d.getPhotoById(&ctx, objID)
+	defer cursor.Close(ctx)
+	photos := make([]models.PhotoModel, 0)
+	for cursor.Next(ctx) {
+		var photo models.PhotoModel
+		err = cursor.Decode(&photo)
+		if err != nil {
+			return nil, err
+		}
+		photos = append(photos, photo)
+	}
+	return photos, nil
 }
 
-func (d *PhotosCollection) UpdatePhoto(id string, photo models.PhotoModel) (*models.PhotoModel, error) {
+func (d *PhotosCollection) GetPhotoById(id *primitive.ObjectID) (*models.PhotoModel, error) {
 	ctx := context.Background()
-	objID, err := objectIdFromHex(id)
-	if err != nil {
-		return nil, ErrInvalidId
-	}
-	filter := bson.D{{Key: "_id", Value: objID}}
-	_, err = d.Photos.ReplaceOne(ctx, filter, photo)
+	return d.getPhotoById(&ctx, id)
+}
+
+func (d *PhotosCollection) UpdatePhoto(id *primitive.ObjectID, photo models.PhotoModel) (*models.PhotoModel, error) {
+	ctx := context.Background()
+	filter := bson.D{{Key: "_id", Value: *id}}
+	_, err := d.Photos.ReplaceOne(ctx, filter, photo)
 	if err != nil {
 		return nil, err
 	}
@@ -100,9 +117,9 @@ func (d *PhotosCollection) DeletePhoto(id string) error {
 	return nil
 }
 
-func (d *PhotosCollection) getPhotoById(ctx *context.Context, id primitive.ObjectID) (*models.PhotoModel, error) {
+func (d *PhotosCollection) getPhotoById(ctx *context.Context, id *primitive.ObjectID) (*models.PhotoModel, error) {
 	photo := PhotoModel{}
-	err := d.Photos.FindOne(*ctx, bson.D{{Key: "_id", Value: id}}).Decode(&photo)
+	err := d.Photos.FindOne(*ctx, bson.D{{Key: "_id", Value: *id}}).Decode(&photo)
 	if err != nil {
 		return nil, err
 	}

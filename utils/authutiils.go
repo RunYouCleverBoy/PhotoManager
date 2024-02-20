@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
@@ -53,8 +54,8 @@ func AuthMiddleware(jwtSecret *[]byte) gin.HandlerFunc {
 	}
 }
 
-func CollectDataFromAuthentication(ctx *gin.Context) (id *string) {
-	id = ctx.MustGet(CallingUserIdContextKey).(*string)
+func CollectDataFromAuthentication(ctx *gin.Context) (id *primitive.ObjectID) {
+	id = ctx.MustGet(CallingUserIdContextKey).(*primitive.ObjectID)
 	return id
 }
 

@@ -14,7 +14,11 @@ func Setup(collection *database.PhotosCollection) {
 
 func GetAllMyPhotos(c *gin.Context) {
 	userId := utils.CollectDataFromAuthentication(c)
-	photos, err := db.GetPhotoById()
+	if photos, error := db.GetPhotosByUserId(userId); error != nil {
+		c.JSON(500, gin.H{"message": "error", "error": error.Error()})
+	} else {
+		c.JSON(200, photos)
+	}
 }
 
 func GetPhoto(c *gin.Context) {
