@@ -70,14 +70,12 @@ func register(ctx *gin.Context) {
 	}
 	userObj.Password = string(hashedPassword)
 	userObj.ID = primitive.NewObjectID()
-	token, authClaims, err := createToken(&userObj)
+	token, _, err := createToken(&userObj)
 	if err != nil {
 		respondToError(ctx, err)
 		return
 	}
 
-	expiration := authClaims.Expiration.Unix()
-	userObj.TokenExpiry = &expiration
 	userObj.Token = token
 
 	// Create the user

@@ -133,7 +133,6 @@ func omitFields(ctx *gin.Context) {
 	user.ID = primitive.NilObjectID
 	user.Email = ""
 	user.Token = nil
-	user.TokenExpiry = nil
 	user.Role = nil
 
 	ctx.Set(SubjectUserContextKey, user)
