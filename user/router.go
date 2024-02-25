@@ -5,7 +5,7 @@ import (
 )
 
 func HandleRoutes(router *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
-	router.Use(authMiddleware, getCurrentUser)
+	router.Use(authMiddleware, GetCurrentUserMiddleware)
 
 	router.GET("/", restrictTo(RoleAdmin), GetAllUsers)
 	router.GET("/:id", restrictTo(RoleAdmin), GetUser)

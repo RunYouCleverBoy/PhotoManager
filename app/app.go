@@ -35,8 +35,8 @@ func main() {
 	user.HandleRoutes(userApi, authMiddleware)
 
 	photosApi := api.Group("/photos")
-	photos.Setup(db.PhotosCollection())
-	photos.HandleRoutes(photosApi)
+	photos.Setup(db.PhotosCollection(), db.AlbumsCollection())
+	photos.HandleRoutes(photosApi, authMiddleware)
 
 	authApi := api.Group("/auth")
 	auth.Setup(env)

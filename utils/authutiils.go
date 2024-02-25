@@ -54,9 +54,12 @@ func AuthMiddleware(jwtSecret *[]byte) gin.HandlerFunc {
 	}
 }
 
-func CollectDataFromAuthentication(ctx *gin.Context) (id *primitive.ObjectID) {
-	id = ctx.MustGet(CallingUserIdContextKey).(*primitive.ObjectID)
-	return id
+func CollectIdFromAuthentication(ctx *gin.Context) (id *primitive.ObjectID) {
+	if id, exists := ctx.Get(CallingUserIdContextKey); exists {
+		return id.(*primitive.ObjectID)
+	} else {
+		return nil
+	}
 }
 
 func extractBearerToken(ctx *gin.Context) (string, error) {

@@ -29,7 +29,7 @@ type PhotosCollection struct {
 	Photos *mongo.Collection
 }
 
-func (d *PhotosCollection) CreatePhoto(photo models.PhotoModel) (*models.PhotoModel, error) {
+func (d *PhotosCollection) CreatePhoto(ownerId *primitive.ObjectID, photo models.PhotoModel) (*models.PhotoModel, error) {
 	ctx := context.Background()
 	_, err := d.Photos.InsertOne(ctx, photo)
 	if err != nil {
@@ -38,9 +38,36 @@ func (d *PhotosCollection) CreatePhoto(photo models.PhotoModel) (*models.PhotoMo
 	return &photo, nil
 }
 
-func (d *PhotosCollection) GetPhotosByUserId(userId *primitive.ObjectID) ([]models.PhotoModel, error) {
+func (d *PhotosCollection) AddCommentToPhoto(photoId *primitive.ObjectID, comment *models.Comments) (*models.Comments, error) {
 	ctx := context.Background()
-	cursor, err := d.Photos.Find(ctx, bson.D{{Key: "owner", Value: *userId}})
+	filter := bson.D{{Key: "_id", Value: *photoId}}
+	update := bson.D{{Key: "$push", Value: bson.D{{Key: "comments", Value: *comment}}}}
+	_, err := d.Photos.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+	return comment, nil
+}
+
+func (d *PhotosCollection) AddTagToPhoto(photoId *primitive.ObjectID, tag string) (*string, error) {
+	ctx := context.Background()
+	filter := bson.D{{Key: "_id", Value: *photoId}}
+	update := bson.D{{Key: "$push", Value: bson.D{{Key: "tags", Value: tag}}}}
+	_, err := d.Photos.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+	return &tag, nil
+}
+
+func (d *PhotosCollection) GetPhotosByUserId(userId *primitive.ObjectID, indexRange *utils.IntRange[int]) ([]models.PhotoModel, error) {
+	ctx := context.Background()
+	options := options.Find()
+	if !indexRange.IsNullOrEmpty() {
+		options = options.SetSkip(int64(indexRange.Start())).SetLimit(int64(indexRange.Length()))
+	}
+
+	cursor, err := d.Photos.Find(ctx, bson.D{{Key: "owner", Value: *userId}}, options)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +84,7 @@ func (d *PhotosCollection) GetPhotosByUserId(userId *primitive.ObjectID) ([]mode
 	return photos, nil
 }
 
-func (d *PhotosCollection) GetPhotos(callerObjectId *primitive.ObjectID, searchCriteria *models.PhotoSearchOptions, indexRange *utils.IntRange) ([]models.PhotoModel, error) {
+func (d *PhotosCollection) GetPhotos(callerObjectId *primitive.ObjectID, searchCriteria *models.PhotoSearchOptions, indexRange *utils.IntRange[int]) ([]models.PhotoModel, error) {
 	visibilityCriteria := bson.D{{Key: "$or", Value: []bson.D{
 		{{Key: "is_public", Value: true}},
 		{{Key: "visible_to", Value: callerObjectId}},
@@ -114,6 +141,29 @@ func (d *PhotosCollection) DeletePhoto(id string) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (d *PhotosCollection) AddOrRemoveAlbumFromManyPhotos(albumId *primitive.ObjectID, addPhotos *[]primitive.ObjectID, removePhotos *[]primitive.ObjectID) error {
+	photosToAdd := []primitive.ObjectID{}
+	photosToRemove := []primitive.ObjectID{}
+	if addPhotos != nil {
+		photosToAdd = *addPhotos
+	}
+	if removePhotos != nil {
+		photosToRemove = *removePhotos
+	}
+
+	addPhotosFilter := bson.D{{Key: "_id", Value: bson.D{{Key: "$in", Value: photosToAdd}}}}
+	removePhotosFilter := bson.D{{Key: "_id", Value: bson.D{{Key: "$in", Value: photosToRemove}}}}
+	if _, err := d.Photos.UpdateMany(context.Background(), addPhotosFilter, bson.D{{Key: "$addToSet", Value: bson.D{{Key: "albums", Value: *albumId}}}}); err != nil {
+		return err
+	}
+
+	if _, err := d.Photos.UpdateMany(context.Background(), removePhotosFilter, bson.D{{Key: "$pull", Value: bson.D{{Key: "albums", Value: *albumId}}}}); err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -25,9 +25,14 @@ func (d *Database) PhotosCollection() *PhotosCollection {
 	return d.collections.photos
 }
 
+func (d *Database) AlbumsCollection() *AlbumCollection {
+	return d.collections.albums
+}
+
 type Collections struct {
 	users  *UserCollection
 	photos *PhotosCollection
+	albums *AlbumCollection
 }
 
 func NewDb(url string, dbName string) (*Database, error) {
@@ -56,9 +61,11 @@ func initCollections(db *mongo.Database) *Collections {
 	col := &Collections{}
 	col.users = &UserCollection{db.Collection("Users")}
 	col.photos = &PhotosCollection{db.Collection("Photos")}
+	col.albums = &AlbumCollection{db.Collection("Albums")}
 
 	initUserSchema(col.users)
 	initPhotoSchema(col.photos)
+	initAlbumSchema(col.albums)
 
 	return col
 }

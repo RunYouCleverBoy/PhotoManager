@@ -4,21 +4,37 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const (
+	WorkflowStateFootage    = "footage"
+	WorkflowStateCollection = "collection"
+	WorkflowStageAlbum      = "album"
+)
+
+type PhotoAlbum struct {
+	ID            primitive.ObjectID   `json:"id" bson:"_id,omitempty"`
+	CoverImageUrl string               `json:"cover_image_url" bson:"cover_image_url,omitempty"`
+	Name          string               `json:"name" bson:"name,omitempty"`
+	Description   string               `json:"description" bson:"description,omitempty"`
+	Owner         primitive.ObjectID   `json:"owner" bson:"owner,omitempty"`
+	VisibleTo     []primitive.ObjectID `json:"visible_to" bson:"visible_to,omitempty"`
+}
+
 type WorkFlow struct {
-	UpvoteGrade   int    `json:"upvote_grade" bson:"upvote_grade,omitempty"`
-	WorkflowStage string `json:"workflow_stage" bson:"workflow_stage,omitempty"`
+	UpvoteGrade   int                  `json:"upvote_grade" bson:"upvote_grade,omitempty"`
+	WorkflowStage string               `json:"workflow_stage" bson:"workflow_stage,omitempty"`
+	Albums        []primitive.ObjectID `json:"albums" bson:"albums,omitempty"`
 }
 
 type PhotoMetadata struct {
-	ShotDate     int64       `json:"shot_date" bson:"shot_date"`
-	ModifiedDate int64       `json:"process_date" bson:"process_date"`
-	Camera       string      `json:"camera" bson:"camera"`
-	Location     Geolocation `json:"location" bson:"location"`
-	Place        Place       `json:"place" bson:"place"`
-	Exposure     string      `json:"exposure" bson:"exposure"`
-	FNumber      float32     `json:"f_number" bson:"f_number"`
-	ISO          int         `json:"iso" bson:"iso"`
-	Description  string      `json:"description" bson:"description"`
+	ShotDate     *int64       `json:"shot_date,omitempty" bson:"shot_date,omitempty"`
+	ModifiedDate *int64       `json:"process_date,omitempty" bson:"process_date,omitempty"`
+	Camera       *string      `json:"camera,omitempty" bson:"camera,omitempty"`
+	Location     *Geolocation `json:"location,omitempty" bson:"location,omitempty"`
+	Place        *Place       `json:"place,omitempty" bson:"place,omitempty"`
+	Exposure     *string      `json:"exposure,omitempty" bson:"exposure,omitempty"`
+	FNumber      *float32     `json:"f_number,omitempty" bson:"f_number,omitempty"`
+	ISO          *int         `json:"iso,omitempty" bson:"iso,omitempty"`
+	Description  *string      `json:"description,omitempty" bson:"description,omitempty"`
 }
 
 type Comments struct {
@@ -29,16 +45,17 @@ type Comments struct {
 }
 
 type PhotoModel struct {
-	ID        primitive.ObjectID   `json:"id" bson:"id"`
-	Url       string               `json:"url" bson:"url"`
-	IsPublic  bool                 `json:"is_public" bson:"is_public"`
-	Owner     primitive.ObjectID   `json:"owner" bson:"owner"`
-	VisibleTo []primitive.ObjectID `json:"visible_to" bson:"visible_to"`
-	Metadata  PhotoMetadata        `json:"metadata" bson:"metadata"`
-	WorkFlow  WorkFlow             `json:"workflow" bson:"workflow_stage"`
-	SimilarTo []primitive.ObjectID `json:"similar_to" bson:"similar_to"`
-	Ancestor  primitive.ObjectID   `json:"ancestor" bson:"ancestor"`
-	Comments  []Comments           `json:"comments" bson:"comments"`
+	ID        primitive.ObjectID   `json:"id" bson:"id,omitempty"`
+	Url       string               `json:"url" bson:"url,omitempty"`
+	IsPublic  bool                 `json:"is_public" bson:"is_public,omitempty"`
+	Owner     primitive.ObjectID   `json:"owner" bson:"owner,omitempty"`
+	VisibleTo []primitive.ObjectID `json:"visible_to" bson:"visible_to,omitempty"`
+	Metadata  PhotoMetadata        `json:"metadata" bson:"metadata,omitempty"`
+	WorkFlow  WorkFlow             `json:"workflow" bson:"workflow_stage,omitempty"`
+	SimilarTo []primitive.ObjectID `json:"similar_to" bson:"similar_to,omitempty"`
+	Ancestor  primitive.ObjectID   `json:"ancestor" bson:"ancestor,omitempty"`
+	Comments  []Comments           `json:"comments" bson:"comments,omitempty"`
+	Tags      []string             `json:"tags" bson:"tags,omitempty"`
 }
 
 type PhotoSearchOptions struct {
@@ -58,4 +75,11 @@ type PhotoSearchOptions struct {
 		UpvoteGrade   *int8   `json:"upvote_grade,omitempty"`
 		WorkflowStage *string `json:"workflow_stage,omitempty"`
 	} `json:"owned_photo_filter,omitempty"`
+}
+
+type AlbumSearchCriteria struct {
+	OwnerID          *primitive.ObjectID `json:"owner_id,omitempty"`
+	NameRegex        *string             `json:"name,omitempty"`
+	DescriptionRegex *string             `json:"description,omitempty"`
+	VisibilityTo     *primitive.ObjectID `json:"visibility_to,omitempty"`
 }

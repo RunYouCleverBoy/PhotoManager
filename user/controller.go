@@ -170,9 +170,9 @@ func selfService(ctx *gin.Context) {
 	}
 }
 
-func getCurrentUser(ctx *gin.Context) {
-	id := ctx.MustGet(CallingUserIdContextKey).(primitive.ObjectID)
-	user, err := db.Get(&id)
+func GetCurrentUserMiddleware(ctx *gin.Context) {
+	id := utils.CollectIdFromAuthentication(ctx)
+	user, err := db.Get(id)
 	if err != nil {
 		respondToError(ctx, err)
 		ctx.Abort()
