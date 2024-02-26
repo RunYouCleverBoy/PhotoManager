@@ -78,7 +78,7 @@ func (d *UserCollection) Update(id *primitive.ObjectID, user *models.User) (*mod
 	return &result, nil
 }
 
-func (d *UserCollection) UpdateCredentials(id *primitive.ObjectID, password *string, token *string, expiration *int64) (*models.User, error) {
+func (d *UserCollection) UpdateCredentials(id *primitive.ObjectID, password *string, token *string, refreshToken *string) (*models.User, error) {
 	ctx := context.Background()
 
 	var result User = User{}
@@ -90,8 +90,8 @@ func (d *UserCollection) UpdateCredentials(id *primitive.ObjectID, password *str
 	if token != nil {
 		updates = append(updates, bson.E{Key: "token", Value: *token})
 	}
-	if expiration != nil {
-		updates = append(updates, bson.E{Key: "token_expiry", Value: *expiration})
+	if refreshToken != nil {
+		updates = append(updates, bson.E{Key: "refreshToken", Value: *refreshToken})
 	}
 	update := bson.D{{Key: "$set", Value: updates}}
 	err := d.users.FindOneAndUpdate(ctx, filter, update).Decode(&result)

@@ -13,6 +13,10 @@ func CreateUserByUserObject(user *models.User) (*models.User, error) {
 	return db.Create(user)
 }
 
-func UpdateCredentials(id *primitive.ObjectID, password *string, token *string, expiration *int64) (*models.User, error) {
-	return db.UpdateCredentials(id, password, token, expiration)
+func GetUserById(id *primitive.ObjectID) (*models.User, error) {
+	return db.Get(id)
+}
+
+func UpdateCredentials(id *primitive.ObjectID, password *string, token *string, refreshToken *string) (*models.User, error) {
+	return db.UpdateCredentials(id, password, token, refreshToken)
 }

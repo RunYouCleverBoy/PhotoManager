@@ -1,10 +1,11 @@
 package auth
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 	"playgrounds.com/database"
@@ -14,26 +15,35 @@ import (
 )
 
 var signFunc func(token *jwt.Token) (string, error) = nil
+var verifyFunc func(tokenStr *string) (*jwt.Token, error) = nil
+var refreshTokenExpiration, tokenExpiration *time.Duration
 
 func Setup(env *environment.Environment) {
 	signFunc = func(token *jwt.Token) (string, error) {
 		return token.SignedString(env.JWTSecret)
 	}
+
+	verifyFunc = func(tokenStr *string) (*jwt.Token, error) {
+		token, err := jwt.Parse(*tokenStr, func(token *jwt.Token) (interface{}, error) {
+			return env.JWTSecret, nil
+		})
+
+		return token, err
+	}
+
+	tokenExpiration = &env.TokenExpiration
+	refreshTokenExpiration = &env.RefreshTokenExpiration
 }
 
 func login(ctx *gin.Context) {
-	requestBody := struct {
-		Username string `json:"email"`
-		Password string `json:"password"`
-	}{}
-
+	requestBody := LoginRequest{}
 	ctx.Bind(&requestBody)
-	if requestBody.Username == "" || requestBody.Password == "" {
+	if requestBody.Email == "" || requestBody.Password == "" {
 		ctx.JSON(400, gin.H{"message": "invalid request", "error": "missing email or password"})
 		return
 	}
 
-	userObj, err := user.GetUserByEmail(requestBody.Username)
+	userObj, err := user.GetUserByEmail(requestBody.Email)
 	if err != nil {
 		respondToError(ctx, err)
 		return
@@ -44,14 +54,77 @@ func login(ctx *gin.Context) {
 		return
 	}
 
-	token, authClaims, err := createToken(userObj)
+	token, _, err := createToken(userObj, tokenExpiration)
 	if err != nil {
 		respondToError(ctx, err)
 		return
 	}
 
-	expiration := authClaims.Expiration.Unix()
-	userObj, err = user.UpdateCredentials(&userObj.ID, &userObj.Password, token, &expiration)
+	refreshToken, _, err := createToken(userObj, refreshTokenExpiration)
+	if err != nil {
+		respondToError(ctx, err)
+		return
+	}
+
+	userObj, err = user.UpdateCredentials(&userObj.ID, &userObj.Password, token, refreshToken)
+	if err != nil {
+		respondToError(ctx, err)
+		return
+	}
+
+	ctx.JSON(200, gin.H{"user": userObj})
+}
+
+func loginWithToken(ctx *gin.Context) {
+	requestBody := LoginWithTokenRequest{}
+	if err := ctx.Bind(&requestBody); err != nil || requestBody.RefreshToken == "" || requestBody.OldToken == "" {
+		ctx.JSON(400, gin.H{"message": "invalid request", "error": "missing refresh token"})
+		return
+	}
+
+	oldToken, err := verifyFunc(&requestBody.OldToken)
+	oldTokenValid := false
+	switch {
+	case oldToken.Valid || err != nil:
+		oldTokenValid = true
+	case errors.Is(err, jwt.ErrTokenExpired):
+		oldTokenValid = true
+	default:
+		oldTokenValid = false
+		return
+	}
+
+	if !oldTokenValid {
+		ctx.JSON(401, gin.H{"message": "invalid old token", "error": err.Error()})
+		return
+	}
+
+	refreshToken, err := verifyFunc(&requestBody.RefreshToken)
+	if err != nil {
+		ctx.JSON(401, gin.H{"message": "invalid refresh token", "error": err.Error()})
+		return
+	}
+
+	claims := utils.AuthClaims{}
+	if err := claims.Parse(refreshToken); err != nil {
+		ctx.JSON(401, gin.H{"message": "invalid refresh token", "error": err.Error()})
+		return
+	}
+
+	userId := claims.Id
+	userObj, err := user.GetUserById(userId)
+	if err != nil {
+		respondToError(ctx, err)
+		return
+	}
+
+	tokenStr, refreshTokenStr, err := createTokens(userObj)
+	if err != nil {
+		respondToError(ctx, err)
+		return
+	}
+
+	userObj, err = user.UpdateCredentials(userId, nil, tokenStr, refreshTokenStr)
 	if err != nil {
 		respondToError(ctx, err)
 		return
@@ -70,13 +143,14 @@ func register(ctx *gin.Context) {
 	}
 	userObj.Password = string(hashedPassword)
 	userObj.ID = primitive.NewObjectID()
-	token, _, err := createToken(&userObj)
+	token, refreshToken, err := createTokens(&userObj)
 	if err != nil {
 		respondToError(ctx, err)
 		return
 	}
 
 	userObj.Token = token
+	userObj.RefreshToken = refreshToken
 
 	// Create the user
 	responseUser, createErr := user.CreateUserByUserObject(&userObj)
@@ -98,8 +172,7 @@ func logout(ctx *gin.Context) {
 
 	id := objIdValue.(primitive.ObjectID)
 	emptyString := ""
-	zero := int64(0)
-	user.UpdateCredentials(&id, nil, &emptyString, &zero)
+	user.UpdateCredentials(&id, nil, &emptyString, &emptyString)
 	ctx.JSON(200, gin.H{"message": "logout"})
 }
 
@@ -111,10 +184,24 @@ func respondToError(ctx *gin.Context, err error) {
 	}
 }
 
-func createToken(user *user.User) (*string, *utils.AuthClaims, error) {
+func createTokens(userObj *user.User) (*string, *string, error) {
+	token, _, err := createToken(userObj, tokenExpiration)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	refreshToken, _, err := createToken(userObj, refreshTokenExpiration)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return token, refreshToken, nil
+}
+
+func createToken(user *user.User, expirationDuration *time.Duration) (*string, *utils.AuthClaims, error) {
 	authClaims := utils.AuthClaims{}
 	authClaims.Id = &user.ID
-	expiration := time.Now().Add(time.Hour * 24 * 90)
+	expiration := time.Now().Add(*expirationDuration)
 	authClaims.Expiration = &expiration
 	token := authClaims.NewUnsignedToken(time.Second * 30)
 	tokenString, err := signFunc(token)

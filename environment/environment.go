@@ -1,11 +1,16 @@
 package environment
 
-import "os"
+import (
+	"os"
+	"time"
+)
 
 type Environment struct {
-	DatabaseURL  string
-	DatabaseName string
-	JWTSecret    []byte
+	DatabaseURL            string
+	DatabaseName           string
+	JWTSecret              []byte
+	TokenExpiration        time.Duration
+	RefreshTokenExpiration time.Duration
 }
 
 func NewFromEnv() *Environment {
