@@ -15,9 +15,11 @@ type Environment struct {
 
 func NewFromEnv() *Environment {
 	return &Environment{
-		DatabaseURL:  os.Getenv("MongoUrl"),
-		DatabaseName: os.Getenv("MongoDBName"),
-		JWTSecret:    []byte(os.Getenv("JWTSecret")),
+		DatabaseURL:            os.Getenv("MongoUrl"),
+		DatabaseName:           os.Getenv("MongoDBName"),
+		JWTSecret:              []byte(os.Getenv("JWTSecret")),
+		TokenExpiration:        time.Hour * 24,
+		RefreshTokenExpiration: time.Hour * 24 * 30,
 	}
 }
 
