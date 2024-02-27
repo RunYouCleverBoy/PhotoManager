@@ -10,6 +10,7 @@ func HandleRoutes(router *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
 
 	router.Use(RequireAlbumOwner("id"))
 	router.POST("/:id/addvisibility", AddOrRemoveAlbumVisibility)
+	router.POST("/:id/addRemovephotos", AddAndRemovePhotosToAlbum)
 
 	router.DELETE("/:id", DeleteAlbum)
 

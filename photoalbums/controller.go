@@ -17,9 +17,11 @@ const (
 )
 
 var albums *database.AlbumCollection
+var photos *database.PhotosCollection
 
-func Setup(collection *database.AlbumCollection) {
-	albums = collection
+func Setup(albumCollection *database.AlbumCollection, photoCollection *database.PhotosCollection) {
+	albums = albumCollection
+	photos = photoCollection
 }
 
 func GetMyAlbums(c *gin.Context) {
@@ -85,6 +87,38 @@ func AddOrRemoveAlbumVisibility(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
+func AddAndRemovePhotosToAlbum(c *gin.Context) {
+	albumIdStr := c.Param("id")
+	albumId, err := primitive.ObjectIDFromHex(albumIdStr)
+	userId := utils.CollectIdFromAuthentication(c)
+
+	if err != nil {
+		c.JSON(400, gin.H{"message": "invalid album ID", "error": err.Error()})
+		return
+	}
+
+	requestBody := AddOrRemovePhotosRequestBody{}
+	if err := c.BindJSON(&requestBody); err != nil {
+		c.JSON(400, gin.H{"message": "invalid request body", "error": err.Error()})
+		return
+	}
+
+	allPhotos := append(requestBody.AddPhotos, requestBody.RemovePhotos...)
+	err = photos.VerifyVisibilityForAllPhotos(&allPhotos, userId)
+	if err != nil {
+		c.JSON(403, gin.H{"message": "not all photos are accessible", "error": err.Error()})
+		return
+	}
+
+	err = photos.AddOrRemoveAlbumFromManyPhotos(&albumId, &requestBody.AddPhotos, &requestBody.RemovePhotos)
+	if err != nil {
+		c.JSON(500, gin.H{"message": "error", "error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "success"})
 }
 
 func DeleteAlbum(c *gin.Context) {

@@ -2,7 +2,6 @@ package photos
 
 import (
 	"github.com/gin-gonic/gin"
-	"playgrounds.com/photoalbums"
 )
 
 func HandleRoutes(router *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
@@ -14,6 +13,4 @@ func HandleRoutes(router *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
 	router.POST("/addcomment/:id", authMiddleware, RequireVisibility("id"), AddComment)
 	router.POST("/addtag/:id", authMiddleware, RequireOwner("id"), AddTag)
 	router.DELETE("/:id", DeletePhoto)
-
-	router.POST("/albums/:id/addRemovephotos", photoalbums.RequireAlbumOwner("id"), AddAndRemovePhotosToAlbum)
 }
