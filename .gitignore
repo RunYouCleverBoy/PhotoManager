@@ -1,5 +1,6 @@
-app/__debug_bin*
-app/app
+*/app/__debug_bin*
+Server/app/app
 go.work.sum
-SrcPhotos/*
+Server/go.work.sum
+*/SrcPhotos/*
 photosfiles/*
