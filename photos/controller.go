@@ -50,8 +50,8 @@ func SearchPhotos(c *gin.Context) {
 
 	indexRange := getPagingQueryArgs(c)
 
-	if photos, error := db.GetPhotos(callerId, &searchOptions, indexRange); error != nil {
-		c.JSON(500, gin.H{"message": "error", "error": error.Error()})
+	if photos, err := db.GetPhotos(callerId, &searchOptions, indexRange); err != nil {
+		c.JSON(500, gin.H{"message": "error", "error": err.Error()})
 	} else {
 		c.JSON(200, photos)
 	}
@@ -76,15 +76,15 @@ func GetPhoto(c *gin.Context) {
 
 func CreatePhoto(c *gin.Context) {
 	createJson := CreatePhotoApi{}
-	if error := c.BindJSON(&createJson); error != nil {
-		c.JSON(400, gin.H{"message": "invalid photo", "error": error.Error()})
+	if err := c.BindJSON(&createJson); err != nil {
+		c.JSON(400, gin.H{"message": "invalid photo", "error": err.Error()})
 		return
 	}
 
 	photo := createJson.toPhotoModel(*utils.CollectIdFromAuthentication(c))
 	currentUserId := utils.CollectIdFromAuthentication(c)
-	if photo, error := db.CreatePhoto(currentUserId, photo); error != nil {
-		c.JSON(500, gin.H{"message": "error", "error": error.Error()})
+	if photo, err := db.CreatePhoto(currentUserId, photo); err != nil {
+		c.JSON(500, gin.H{"message": "error", "error": err.Error()})
 	} else {
 		c.JSON(201, photo)
 	}
