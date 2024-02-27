@@ -36,7 +36,7 @@ type Comments struct {
 }
 
 type PhotoModel struct {
-	ID        primitive.ObjectID   `json:"id" bson:"id,omitempty"`
+	ID        primitive.ObjectID   `json:"id" bson:"_id,omitempty"`
 	Url       string               `json:"url" bson:"url,omitempty"`
 	IsPublic  bool                 `json:"is_public" bson:"is_public,omitempty"`
 	Owner     primitive.ObjectID   `json:"owner" bson:"owner,omitempty"`

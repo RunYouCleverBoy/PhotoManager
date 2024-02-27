@@ -1,3 +1,5 @@
 app/__debug_bin*
 app/app
 go.work.sum
+SrcPhotos/*
+photosfiles/*

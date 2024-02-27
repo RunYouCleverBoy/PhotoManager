@@ -2,7 +2,11 @@ package photos
 
 import (
 	"errors"
+	"log"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -75,7 +79,7 @@ func GetPhoto(c *gin.Context) {
 }
 
 func CreatePhoto(c *gin.Context) {
-	createJson := CreatePhotoApi{}
+	createJson := CreatePhotoRequest{}
 	if err := c.BindJSON(&createJson); err != nil {
 		c.JSON(400, gin.H{"message": "invalid photo", "error": err.Error()})
 		return
@@ -83,11 +87,48 @@ func CreatePhoto(c *gin.Context) {
 
 	photo := createJson.toPhotoModel(*utils.CollectIdFromAuthentication(c))
 	currentUserId := utils.CollectIdFromAuthentication(c)
+
 	if photo, err := db.CreatePhoto(currentUserId, photo); err != nil {
 		c.JSON(500, gin.H{"message": "error", "error": err.Error()})
 	} else {
-		c.JSON(201, photo)
+		rawUrl := "http://" + c.Request.Host + c.Request.URL.String()
+		url := strings.Split(rawUrl, "/create")[0] + "/upload/" + photo.ID.Hex()
+		response := CreatePhotoResponse{UploadUrl: url, PhotoRecord: photo}
+		c.JSON(201, response)
 	}
+}
+
+func UploadPhoto(c *gin.Context) {
+	photoIdStr := c.Param("id")
+	photoId, err := primitive.ObjectIDFromHex(photoIdStr)
+	if err != nil {
+		c.JSON(400, gin.H{"message": "invalid photo ID", "error": err.Error()})
+		return
+	}
+	file, _ := c.FormFile("file")
+	log.Println(file.Filename)
+
+	// Upload the file to specific dst.
+	destinationFilename := "photosfiles/" + photoIdStr + ".jpg"
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	parent := filepath.Dir(wd)
+	if _, err := os.Stat(filepath.Join(parent, "photosfiles")); os.IsNotExist(err) {
+		os.Mkdir(filepath.Join(parent, "photosfiles"), os.ModePerm)
+	}
+
+	destinationFilename = filepath.Join(parent, destinationFilename)
+	c.SaveUploadedFile(file, destinationFilename)
+
+	// Save the file path to the database
+	if err := db.SetPhotoFile(&photoId, destinationFilename); err != nil {
+		c.JSON(500, gin.H{"message": "error", "error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "success"})
 }
 
 func AddComment(c *gin.Context) {

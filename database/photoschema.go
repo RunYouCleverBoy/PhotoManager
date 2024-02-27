@@ -43,6 +43,14 @@ func (d *PhotosCollection) CreatePhoto(ownerId *primitive.ObjectID, photo models
 	return &photo, nil
 }
 
+func (d *PhotosCollection) SetPhotoFile(id *primitive.ObjectID, fileUrl string) error {
+	ctx := context.Background()
+	filter := bson.D{{Key: "_id", Value: *id}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "url", Value: fileUrl}}}}
+	_, err := d.Photos.UpdateOne(ctx, filter, update)
+	return err
+}
+
 func (d *PhotosCollection) AddCommentToPhoto(photoId *primitive.ObjectID, comment *models.Comments) (*models.Comments, error) {
 	ctx := context.Background()
 	filter := bson.D{{Key: "_id", Value: *photoId}}

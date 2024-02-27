@@ -56,7 +56,8 @@ func AuthMiddleware(jwtSecret *[]byte) gin.HandlerFunc {
 
 func CollectIdFromAuthentication(ctx *gin.Context) (id *primitive.ObjectID) {
 	if id, exists := ctx.Get(CallingUserIdContextKey); exists {
-		return id.(*primitive.ObjectID)
+		userID := id.(primitive.ObjectID)
+		return &userID
 	} else {
 		return nil
 	}
