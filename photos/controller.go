@@ -18,9 +18,8 @@ var (
 	ErrorInvalidObjectId = errors.New("invalid object id")
 )
 
-func Setup(collection *database.PhotosCollection, albumsCollection *database.AlbumCollection) {
+func Setup(collection *database.PhotosCollection) {
 	db = collection
-	albums = albumsCollection
 }
 
 func GetAllMyPhotos(c *gin.Context) {
@@ -205,30 +204,6 @@ func RequireOwner(photoIdParam string) gin.HandlerFunc {
 
 		c.Next()
 	}
-}
-
-// router.DELETE("/albums/:id", RequireAlbumOwner("id"), DeleteAlbum)
-func AddAndRemovePhotosToAlbum(c *gin.Context) {
-	albumIdStr := c.Param("id")
-	albumId, err := primitive.ObjectIDFromHex(albumIdStr)
-	if err != nil {
-		c.JSON(400, gin.H{"message": "invalid album ID", "error": err.Error()})
-		return
-	}
-
-	requestBody := AddOrRemovePhotosRequestBody{}
-	if err := c.BindJSON(&requestBody); err != nil {
-		c.JSON(400, gin.H{"message": "invalid request body", "error": err.Error()})
-		return
-	}
-
-	err = db.AddOrRemoveAlbumFromManyPhotos(&albumId, &requestBody.AddPhotos, &requestBody.RemovePhotos)
-	if err != nil {
-		c.JSON(500, gin.H{"message": "error", "error": err.Error()})
-		return
-	}
-
-	c.JSON(200, gin.H{"message": "success"})
 }
 
 func getPagingQueryArgs(c *gin.Context) *utils.IntRange[int] {

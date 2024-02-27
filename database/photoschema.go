@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -9,6 +10,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"playgrounds.com/models"
 	"playgrounds.com/utils"
+)
+
+var (
+	ErrInvisibleToUser = errors.New("photo is not visible to user")
 )
 
 func initPhotoSchema(collection *PhotosCollection) {
@@ -164,6 +169,27 @@ func (d *PhotosCollection) AddOrRemoveAlbumFromManyPhotos(albumId *primitive.Obj
 		return err
 	}
 
+	return nil
+}
+
+func (d *PhotosCollection) VerifyVisibilityForAllPhotos(photoIds *[]primitive.ObjectID, userId *primitive.ObjectID) error {
+	if photoIds == nil || len(*photoIds) == 0 {
+		return nil
+	}
+
+	filter := bson.D{{Key: "_id", Value: bson.D{{Key: "$in", Value: *photoIds}}},
+		{Key: "$or", Value: []bson.D{
+			{{Key: "visible_to", Value: *userId}},
+			{{Key: "owner", Value: *userId}},
+		}},
+	}
+	count, err := d.Photos.CountDocuments(context.Background(), filter)
+	if err != nil {
+		return err
+	}
+	if count < int64(len(*photoIds)) {
+		return ErrInvisibleToUser
+	}
 	return nil
 }
 

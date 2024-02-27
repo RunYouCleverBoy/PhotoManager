@@ -23,13 +23,3 @@ type AlbumAndPhotoRequestBody struct {
 	AlbumId string   `json:"albumId"`
 	PhotoId []string `json:"photoId"`
 }
-
-type AddOrRemovePhotosRequestBody struct {
-	AddPhotos    []primitive.ObjectID `json:"addPhotos"`
-	RemovePhotos []primitive.ObjectID `json:"removePhotos"`
-}
-
-type AddOrRemoveVisibilityRequestBody struct {
-	AddVisibleTo    []primitive.ObjectID `json:"addVisibleTo"`
-	RemoveVisibleTo []primitive.ObjectID `json:"removeVisibleTo"`
-}

@@ -1,4 +1,4 @@
-package photos
+package photoalbums
 
 import (
 	"net/http"
@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"playgrounds.com/database"
 	"playgrounds.com/models"
+	"playgrounds.com/user"
 	"playgrounds.com/utils"
 )
 
@@ -16,6 +17,12 @@ const (
 )
 
 var albums *database.AlbumCollection
+var photos *database.PhotosCollection
+
+func Setup(albumCollection *database.AlbumCollection, photoCollection *database.PhotosCollection) {
+	albums = albumCollection
+	photos = photoCollection
+}
 
 func GetMyAlbums(c *gin.Context) {
 	userId := utils.CollectIdFromAuthentication(c)
@@ -65,12 +72,53 @@ func AddOrRemoveAlbumVisibility(c *gin.Context) {
 		return
 	}
 
+	allUsers := append(reqBody.AddVisibleTo, reqBody.RemoveVisibleTo...)
+	if allExist, err := user.VerifyUsersExist(&allUsers); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	} else if !allExist {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "one or more users do not exist"})
+		return
+	}
+
 	if err := albums.AddOrRemoveAlbumVisibility(&albumId, &reqBody.AddVisibleTo, &reqBody.RemoveVisibleTo); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
+func AddAndRemovePhotosToAlbum(c *gin.Context) {
+	albumIdStr := c.Param("id")
+	albumId, err := primitive.ObjectIDFromHex(albumIdStr)
+	userId := utils.CollectIdFromAuthentication(c)
+
+	if err != nil {
+		c.JSON(400, gin.H{"message": "invalid album ID", "error": err.Error()})
+		return
+	}
+
+	requestBody := AddOrRemovePhotosRequestBody{}
+	if err := c.BindJSON(&requestBody); err != nil {
+		c.JSON(400, gin.H{"message": "invalid request body", "error": err.Error()})
+		return
+	}
+
+	allPhotos := append(requestBody.AddPhotos, requestBody.RemovePhotos...)
+	err = photos.VerifyVisibilityForAllPhotos(&allPhotos, userId)
+	if err != nil {
+		c.JSON(403, gin.H{"message": "not all photos are accessible", "error": err.Error()})
+		return
+	}
+
+	err = photos.AddOrRemoveAlbumFromManyPhotos(&albumId, &requestBody.AddPhotos, &requestBody.RemovePhotos)
+	if err != nil {
+		c.JSON(500, gin.H{"message": "error", "error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "success"})
 }
 
 func DeleteAlbum(c *gin.Context) {
