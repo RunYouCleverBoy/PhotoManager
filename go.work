@@ -2,7 +2,12 @@ go 1.21.6
 
 use (
 	./app
-	./router
-	./userrouter
+	./auth
+	./database
+	./environment
+	./models
+	./photos
+	./photoalbums
+	./user
 	./utils
 )
