@@ -260,11 +260,11 @@ func getPhotoById(id string) (*models.PhotoModel, error) {
 }
 
 func abortWithError(c *gin.Context, err error) {
-	status, errMsg := resolveError(c, err)
+	status, errMsg := resolveError(err)
 	c.AbortWithError(status, errors.New(errMsg+" "+err.Error()))
 }
 
-func resolveError(c *gin.Context, err error) (int, string) {
+func resolveError(err error) (int, string) {
 	errCode, errMsg := 500, "error"
 	switch err {
 	case ErrorNotLoggedIn:
