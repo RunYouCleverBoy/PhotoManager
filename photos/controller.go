@@ -18,9 +18,8 @@ var (
 	ErrorInvalidObjectId = errors.New("invalid object id")
 )
 
-func Setup(collection *database.PhotosCollection, albumsCollection *database.AlbumCollection) {
+func Setup(collection *database.PhotosCollection) {
 	db = collection
-	albums = albumsCollection
 }
 
 func GetAllMyPhotos(c *gin.Context) {
@@ -211,6 +210,8 @@ func RequireOwner(photoIdParam string) gin.HandlerFunc {
 func AddAndRemovePhotosToAlbum(c *gin.Context) {
 	albumIdStr := c.Param("id")
 	albumId, err := primitive.ObjectIDFromHex(albumIdStr)
+	userId := utils.CollectIdFromAuthentication(c)
+
 	if err != nil {
 		c.JSON(400, gin.H{"message": "invalid album ID", "error": err.Error()})
 		return
@@ -219,6 +220,18 @@ func AddAndRemovePhotosToAlbum(c *gin.Context) {
 	requestBody := AddOrRemovePhotosRequestBody{}
 	if err := c.BindJSON(&requestBody); err != nil {
 		c.JSON(400, gin.H{"message": "invalid request body", "error": err.Error()})
+		return
+	}
+
+	err = db.VerifyVisibilityForAllPhotos(&requestBody.AddPhotos, userId)
+	if err != nil {
+		c.JSON(403, gin.H{"message": "not all photos are accessible", "error": err.Error()})
+		return
+	}
+
+	err = db.VerifyVisibilityForAllPhotos(&requestBody.RemovePhotos, userId)
+	if err != nil {
+		c.JSON(403, gin.H{"message": "not all photos are accessible", "error": err.Error()})
 		return
 	}
 

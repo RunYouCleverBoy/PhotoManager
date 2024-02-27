@@ -1,4 +1,4 @@
-package photos
+package photoalbums
 
 import (
 	"net/http"
@@ -16,6 +16,10 @@ const (
 )
 
 var albums *database.AlbumCollection
+
+func Setup(collection *database.AlbumCollection) {
+	albums = collection
+}
 
 func GetMyAlbums(c *gin.Context) {
 	userId := utils.CollectIdFromAuthentication(c)
