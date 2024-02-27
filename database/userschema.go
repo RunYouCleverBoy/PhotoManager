@@ -68,20 +68,18 @@ func (d *UserCollection) Create(user *models.User) (*models.User, error) {
 func (d *UserCollection) Update(id *primitive.ObjectID, user *models.User) (*models.User, error) {
 	ctx := context.Background()
 
-	var result User = User{}
 	filter := bson.D{{Key: "_id", Value: *id}}
-	err := d.users.FindOneAndUpdate(ctx, filter, bson.D{{Key: "$set", Value: &user}}).Decode(&result)
+	err := d.users.FindOneAndUpdate(ctx, filter, bson.D{{Key: "$set", Value: &user}}).Err()
 	if err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return d.getUserById(&ctx, id)
 }
 
 func (d *UserCollection) UpdateCredentials(id *primitive.ObjectID, password *string, token *string, refreshToken *string) (*models.User, error) {
 	ctx := context.Background()
 
-	var result User = User{}
 	filter := bson.D{{Key: "_id", Value: id}}
 	updates := bson.D{}
 	if password != nil {
@@ -94,12 +92,12 @@ func (d *UserCollection) UpdateCredentials(id *primitive.ObjectID, password *str
 		updates = append(updates, bson.E{Key: "refreshToken", Value: *refreshToken})
 	}
 	update := bson.D{{Key: "$set", Value: updates}}
-	err := d.users.FindOneAndUpdate(ctx, filter, update).Decode(&result)
+	err := d.users.FindOneAndUpdate(ctx, filter, update).Err()
 	if err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return d.getUserById(&ctx, id)
 }
 
 func (d *UserCollection) Delete(id *primitive.ObjectID) error {
@@ -123,7 +121,12 @@ func (d *UserCollection) getUserById(ctx *context.Context, id *primitive.ObjectI
 func (d *UserCollection) GetUserByEmail(email string) (*models.User, error) {
 	ctx := context.Background()
 	user := User{}
-	if err := d.users.FindOne(ctx, bson.D{{Key: "email", Value: email}}).Decode(&user); err != nil {
+	err := d.users.FindOne(ctx, bson.D{{Key: "email", Value: email}}).Decode(&user)
+	switch err {
+	case nil: // user found
+	case ErrNoDocuments:
+		return nil, ErrInvalidUser
+	default:
 		return nil, err
 	}
 
