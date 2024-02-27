@@ -109,6 +109,20 @@ func (d *UserCollection) Delete(id *primitive.ObjectID) error {
 	return nil
 }
 
+func (d *UserCollection) VerifyUsersExist(users *[]primitive.ObjectID) (bool, error) {
+	ctx := context.Background()
+	count, err := d.users.CountDocuments(ctx, bson.D{{Key: "_id", Value: bson.D{{Key: "$in", Value: users}}}})
+	if err != nil {
+		return false, err
+	}
+
+	if count != int64(len(*users)) {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (d *UserCollection) getUserById(ctx *context.Context, id *primitive.ObjectID) (*models.User, error) {
 	user := User{}
 	if err := d.users.FindOne(*ctx, bson.D{{Key: "_id", Value: id}}).Decode(&user); err != nil {

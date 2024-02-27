@@ -20,3 +20,7 @@ func GetUserById(id *primitive.ObjectID) (*models.User, error) {
 func UpdateCredentials(id *primitive.ObjectID, password *string, token *string, refreshToken *string) (*models.User, error) {
 	return db.UpdateCredentials(id, password, token, refreshToken)
 }
+
+func VerifyUsersExist(users *[]primitive.ObjectID) (bool, error) {
+	return db.VerifyUsersExist(users)
+}

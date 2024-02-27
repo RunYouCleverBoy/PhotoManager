@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"playgrounds.com/database"
 	"playgrounds.com/models"
+	"playgrounds.com/user"
 	"playgrounds.com/utils"
 )
 
@@ -66,6 +67,15 @@ func AddOrRemoveAlbumVisibility(c *gin.Context) {
 	reqBody := AddOrRemoveVisibilityRequestBody{}
 	if err := c.BindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	allUsers := append(reqBody.AddVisibleTo, reqBody.RemoveVisibleTo...)
+	if allExist, err := user.VerifyUsersExist(&allUsers); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	} else if !allExist {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "one or more users do not exist"})
 		return
 	}
 
