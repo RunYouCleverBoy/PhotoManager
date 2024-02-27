@@ -111,19 +111,20 @@ func UploadPhoto(c *gin.Context) {
 		return
 	}
 
+	destinationDir := "photosfiles"
 	// Upload the file to specific dst.
-	destinationFilename := "photosfiles/" + photoIdStr + ".jpg"
 	wd, err := os.Getwd()
 	if err != nil {
 		c.JSON(500, gin.H{"message": "error", "error": err.Error()})
 		return
 	}
-	parent := filepath.Dir(wd)
-	if _, err := os.Stat(filepath.Join(parent, "photosfiles")); os.IsNotExist(err) {
-		os.Mkdir(filepath.Join(parent, "photosfiles"), os.ModePerm)
+	serverParent := filepath.Dir(wd)
+	projectParent := filepath.Dir(serverParent)
+	if _, err := os.Stat(filepath.Join(projectParent, destinationDir)); os.IsNotExist(err) {
+		os.Mkdir(filepath.Join(projectParent, destinationDir), os.ModePerm)
 	}
 
-	destinationFilename = filepath.Join(parent, destinationFilename)
+	destinationFilename := filepath.Join(projectParent, photoIdStr+".jpg")
 	c.SaveUploadedFile(file, destinationFilename)
 
 	// Save the file path to the database
