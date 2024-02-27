@@ -28,8 +28,8 @@ func GetAllMyPhotos(c *gin.Context) {
 
 	indexRange := getPagingQueryArgs(c)
 
-	if photos, error := db.GetPhotosByUserId(userId, indexRange); error != nil {
-		c.JSON(500, gin.H{"message": "error", "error": error.Error()})
+	if photos, err := db.GetPhotosByUserId(userId, indexRange); err != nil {
+		c.JSON(500, gin.H{"message": "error", "error": err.Error()})
 	} else {
 		c.JSON(200, photos)
 	}
