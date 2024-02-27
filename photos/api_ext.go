@@ -5,7 +5,7 @@ import (
 	"playgrounds.com/models"
 )
 
-func (req *CreatePhotoApi) toPhotoModel(ownerId primitive.ObjectID) models.PhotoModel {
+func (req *CreatePhotoRequest) toPhotoModel(ownerId primitive.ObjectID) models.PhotoModel {
 	objectId := primitive.NewObjectID()
 	return models.PhotoModel{
 		ID:        objectId,
@@ -15,7 +15,7 @@ func (req *CreatePhotoApi) toPhotoModel(ownerId primitive.ObjectID) models.Photo
 		Metadata:  *req.Metadata,
 		WorkFlow: models.WorkFlow{
 			UpvoteGrade:   0,
-			WorkflowStage: models.WorkflowStageAlbum,
+			WorkflowStage: models.WorkflowStateFootage,
 		},
 		Ancestor: objectId, // A footage is its own ancestor
 		Tags:     req.Tags,

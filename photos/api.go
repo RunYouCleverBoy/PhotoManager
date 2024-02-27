@@ -1,16 +1,19 @@
 package photos
 
 import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"playgrounds.com/models"
 )
 
-type CreatePhotoApi struct {
-	Id       primitive.ObjectID    `json:"id"`
+type CreatePhotoRequest struct {
 	IsPublic bool                  `json:"isPublic"`
 	Metadata *models.PhotoMetadata `json:"metadata,omitempty"`
 	Tags     []string              `json:"tags,omitempty"`
 	Comments []models.Comments     `json:"comments,omitempty"`
+}
+
+type CreatePhotoResponse struct {
+	UploadUrl   string             `json:"uploadUrl"`
+	PhotoRecord *models.PhotoModel `json:"photoRecord"`
 }
 
 type EditPhotoApi struct {
