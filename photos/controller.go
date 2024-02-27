@@ -2,7 +2,6 @@ package photos
 
 import (
 	"errors"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -105,14 +104,19 @@ func UploadPhoto(c *gin.Context) {
 		c.JSON(400, gin.H{"message": "invalid photo ID", "error": err.Error()})
 		return
 	}
+
 	file, _ := c.FormFile("file")
-	log.Println(file.Filename)
+	if file == nil {
+		c.JSON(400, gin.H{"message": "missing file"})
+		return
+	}
 
 	// Upload the file to specific dst.
 	destinationFilename := "photosfiles/" + photoIdStr + ".jpg"
 	wd, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		c.JSON(500, gin.H{"message": "error", "error": err.Error()})
+		return
 	}
 	parent := filepath.Dir(wd)
 	if _, err := os.Stat(filepath.Join(parent, "photosfiles")); os.IsNotExist(err) {
