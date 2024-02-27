@@ -135,12 +135,8 @@ func AddTag(c *gin.Context) {
 	}
 }
 
-func UpdatePhoto(c *gin.Context) {
-	// TODO
-}
-
 func DeletePhoto(c *gin.Context) {
-	// TODO
+	db.DeletePhoto(c.Param("id"))
 }
 
 func GetPublicPhoto(c *gin.Context) {
