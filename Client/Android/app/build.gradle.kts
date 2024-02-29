@@ -74,9 +74,17 @@ dependencies {
     val navVersion: String by rootProject.extra
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
+    // Initializers
+    implementation("androidx.startup:startup-runtime:1.1.1")
+
+    // Timber
     implementation("com.jakewharton.timber:timber:5.0.1")
 
-    implementation("androidx.startup:startup-runtime:1.1.1")
+    // Coil
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Viewer
+    implementation("me.saket.telephoto:zoomable-image-coil:0.8.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

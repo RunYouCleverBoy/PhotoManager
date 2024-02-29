@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Photomanager</string>
     <string name="splash_screen_content_description">Splash screen content</string>
+    <string name="open_picker">Open picker</string>
+    <string name="grid_content_description">Image number %d</string>
+    <string name="zoomed_image">Zoomed_image</string>
 </resources>
