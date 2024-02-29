@@ -9,5 +9,5 @@ sealed class MainEvent {
 }
 
 sealed class MainAction {
-    data class NavigateTo(val path: String) : MainAction()
+    data class NavigateTo(val path: String, val popupToPath: String? = null) : MainAction()
 }

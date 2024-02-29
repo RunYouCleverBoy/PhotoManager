@@ -18,16 +18,10 @@ import com.photomanager.photomanager.splash.PhotoSplashScreen
 fun MainNav(navController: NavHostController, startDestination: String) {
     val mainViewModel = hiltViewModel<MainViewModel>()
     LaunchedEffect(Unit) {
-        mainViewModel.action.collect { action ->
-            when (action) {
-                is MainAction.NavigateTo -> {
-                    navController.navigate(action.path)
-                }
-            }
-        }
+        mainViewModel.action.collect { action -> navController.renderAction(action) }
     }
     NavHost(navController = navController, startDestination = startDestination, builder = {
-        composable(MainNavPath.Splash.navTemplate) {
+        composable(MainNavPath.Splash.navTemplate) { backstackEntry ->
             PhotoSplashScreen { mainViewModel.dispatchEvent(MainEvent.OnSplashComplete) }
         }
         composable(MainNavPath.Home.navTemplate) {
@@ -41,4 +35,14 @@ fun MainNav(navController: NavHostController, startDestination: String) {
             PhotoDetailScreen(uri = it.arguments?.getString("uri") ?: "http://NULLLLLLL")
         }
     })
+}
+
+private fun NavHostController.renderAction(
+    action: MainAction
+) {
+    when (action) {
+        is MainAction.NavigateTo -> navigate(action.path) {
+            action.popupToPath?.let { popUpTo(it) { inclusive = true } }
+        }
+    }
 }

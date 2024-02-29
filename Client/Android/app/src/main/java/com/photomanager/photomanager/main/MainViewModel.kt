@@ -11,7 +11,7 @@ class MainViewModel @Inject constructor() :
     override fun dispatchEvent(event: MainEvent) {
         when (event) {
             MainEvent.OnSplashComplete -> {
-                emit(MainAction.NavigateTo(MainNavPath.Home.navTemplate))
+                emit(MainAction.NavigateTo(MainNavPath.Home.navTemplate, MainNavPath.Splash.navTemplate))
             }
 
             is MainEvent.OnPhotoOpenRequest -> {
