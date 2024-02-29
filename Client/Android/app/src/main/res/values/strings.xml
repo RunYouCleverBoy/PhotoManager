@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Photomanager</string>
+    <string name="splash_screen_content_description">Splash screen content</string>
 </resources>
