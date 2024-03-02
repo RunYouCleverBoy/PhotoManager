@@ -1,4 +1,4 @@
-package com.photomanager.photomanager.main.home.di
+package com.photomanager.photomanager.main.home.repository
 
 import android.net.Uri
 import kotlinx.coroutines.flow.StateFlow

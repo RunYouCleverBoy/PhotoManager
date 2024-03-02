@@ -1,7 +1,7 @@
 package com.photomanager.photomanager.main.home
 
 import androidx.lifecycle.viewModelScope
-import com.photomanager.photomanager.main.home.di.WorkImagesRepo
+import com.photomanager.photomanager.main.home.repository.WorkImagesRepo
 import com.photomanager.photomanager.mvi.MVIViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.update

@@ -1,6 +1,6 @@
 package com.photomanager.photomanager.main.home.api
 
-interface CollectionApi {
+interface PhotosApi {
     fun getImages()
     fun addImage()
     fun removeImage()

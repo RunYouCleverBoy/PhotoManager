@@ -2,7 +2,7 @@ package com.photomanager.photomanager.main.home.api
 
 import javax.inject.Inject
 
-class CollectionApiImpl @Inject constructor() : CollectionApi {
+class PhotosApiImpl @Inject constructor() : PhotosApi {
     override fun getImages() {
         TODO("Not yet implemented")
     }

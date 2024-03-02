@@ -1,8 +1,8 @@
-package com.photomanager.photomanager.main.home
+package com.photomanager.photomanager.main.home.di
 
-import com.photomanager.photomanager.main.home.api.CollectionApi
-import com.photomanager.photomanager.main.home.api.CollectionApiImpl
-import com.photomanager.photomanager.main.home.di.WorkImagesRepo
+import com.photomanager.photomanager.main.home.api.PhotosApi
+import com.photomanager.photomanager.main.home.api.PhotosApiImpl
+import com.photomanager.photomanager.main.home.repository.WorkImagesRepo
 import com.photomanager.photomanager.main.home.repository.WorkImagesRepoImpl
 import dagger.Binds
 import dagger.Module
@@ -16,5 +16,5 @@ abstract class HomeProvider {
     abstract fun provideWorkImagesRepo(workImagesRepoImpl: WorkImagesRepoImpl): WorkImagesRepo
 
     @Binds
-    abstract fun provideCollectionApi(collectionApi: CollectionApiImpl): CollectionApi
+    abstract fun provideCollectionApi(collectionApi: PhotosApiImpl): PhotosApi
 }
