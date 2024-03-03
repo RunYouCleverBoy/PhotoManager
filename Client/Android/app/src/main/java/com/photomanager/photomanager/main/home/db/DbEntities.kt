@@ -9,7 +9,7 @@ import java.util.Date
 @Entity(tableName = "Footage")
 @TypeConverters(DateConverter::class)
 data class FootageEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @PrimaryKey val id: String,
     @ColumnInfo(name="uri") val uri: String,
     @ColumnInfo(name="width") val width: Int,
     @ColumnInfo(name="height") val height: Int,
@@ -20,21 +20,23 @@ data class FootageEntity(
     @ColumnInfo(name="lon") val lon: Double?,
     @ColumnInfo(name="camera") val camera: String,
     @ColumnInfo(name="focalLength") val focalLength: String?,
+    @ColumnInfo(name="flash") val flash: String?,
 )
 
 
 @Entity(tableName = "Collection")
 @TypeConverters(DateConverter::class)
 data class CollectionEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @PrimaryKey val id: String,
     @ColumnInfo(name="uri") val uri: String,
     @ColumnInfo(name="width") val width: Int,
     @ColumnInfo(name="height") val height: Int,
     @ColumnInfo(name="orientation") val orientation: String?,
     @ColumnInfo(name="caption") val caption: String,
     @ColumnInfo(name="date") val date: Date,
-    @ColumnInfo(name="lat") val lat: Double,
-    @ColumnInfo(name="lon") val lon: Double,
+    @ColumnInfo(name="lat") val lat: Double?,
+    @ColumnInfo(name="lon") val lon: Double?,
     @ColumnInfo(name="camera") val camera: String,
-    @ColumnInfo(name="focalLength") val focalLength: String,
+    @ColumnInfo(name="focalLength") val focalLength: String?,
+    @ColumnInfo(name="flash") val flash: String?,
 )

@@ -4,6 +4,7 @@ import android.net.Uri
 import java.util.Date
 
 data class ImageDescriptor(
+    val id: String, // Unique identifier
     val uri: Uri,
     val width: Int = 0,
     val height: Int = 0,

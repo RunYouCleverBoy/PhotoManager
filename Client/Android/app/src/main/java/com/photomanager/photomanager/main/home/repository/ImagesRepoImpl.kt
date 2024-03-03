@@ -1,9 +1,12 @@
 package com.photomanager.photomanager.main.home.repository
 
-import android.net.Uri
-import com.photomanager.photomanager.main.home.db.DatabaseHolder
-import com.photomanager.photomanager.main.home.db.FootageEntity
+import com.photomanager.photomanager.main.home.api.ImageApiDescriptor
+import com.photomanager.photomanager.main.home.api.ImagesApi
+import com.photomanager.photomanager.main.home.db.CollectionDao
+import com.photomanager.photomanager.main.home.db.FootageDao
 import com.photomanager.photomanager.main.home.model.ImageDescriptor
+import com.photomanager.photomanager.main.home.model.SearchCriteria
+import com.photomanager.photomanager.utils.size
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -12,89 +15,115 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class ImagesRepoImpl @Inject constructor(private val databaseHolder: DatabaseHolder) : ImagesRepo {
-    override fun getFootage(
-        searchCriteria: ImagesRepo.SearchCriteria,
+class ImagesRepoImpl @Inject constructor(
+    api: ImagesApi,
+    footageDao: FootageDao,
+    collectionDao: CollectionDao
+) : ImagesRepo {
+    override val footage: ImagesRepo.Channel.Footage = FootageRepoImpl(footageDao, api)
+    override val collection: ImagesRepo.Channel.Collection = CollectionRepoImpl(collectionDao, footageDao, api)
+}
+
+class FootageRepoImpl(private val dao: FootageDao, private val api: ImagesApi) :
+    ImagesRepo.Channel.Footage() {
+    override suspend fun add(imageDescriptor: List<ImageDescriptor>) {
+        dao.insertFootage(imageDescriptor.map { it.toFootageEntity() })
+    }
+
+    override suspend fun get(
+        searchCriteria: SearchCriteria,
         indexRange: IntRange
-    ): Flow<List<ImageDescriptor>> = flow {
-        val dbResult = CoroutineScope(Dispatchers.IO).async {
-            issueCallForDb(searchCriteria, indexRange)
-        }
-        val netResult = CoroutineScope(Dispatchers.IO).async {
-            issueCallForNet(searchCriteria, indexRange)
-        }
-        val dbList = dbResult.await().map { it.toImageDescriptor() }
-        emit(dbList)
-        val netList = netResult.await()
-        if (netList.isNotEmpty()) {
-            emit(netList)
-            CoroutineScope(Dispatchers.IO).launch {
-                netList.forEach {
-                    databaseHolder.database.footageDao().insertFootage(it.toFootageEntity())
-                }
+    ): Flow<List<ImageDescriptor>> {
+        val scope = CoroutineScope(Dispatchers.IO)
+        return flow {
+            val footage = scope.async {
+                // get data from server
+                api.getFootage(searchCriteria, indexRange).map { it.toImageDescriptor() }
             }
+            var fromDb = footageEntities(searchCriteria, indexRange)
+            emit(fromDb)
+
+            dao.insertFootage(footage.await().map { it.toFootageEntity() })
+
+            fromDb = footageEntities(searchCriteria, indexRange)
+            emit(fromDb)
         }
     }
-    private suspend fun issueCallForDb(
-        searchCriteria: ImagesRepo.SearchCriteria,
-        indexRange: IntRange
-    ): List<FootageEntity> {
-        return databaseHolder.database.footageDao().getFootageBy(
-            afterDate = searchCriteria.afterDate,
-            beforeDate = searchCriteria.beforeDate,
-            captionIncludes = searchCriteria.captionIncludes,
-            startIndex = indexRange.first,
-            size = if (!indexRange.isEmpty()) indexRange.last - indexRange.first + 1 else 0
+
+    override suspend fun getSize(searchCriteria: SearchCriteria): Int {
+        return dao.countFootageBy(
+            searchCriteria.afterDate,
+            searchCriteria.beforeDate,
+            searchCriteria.captionIncludes
         )
     }
 
-    private fun issueCallForNet(searchCriteria: ImagesRepo.SearchCriteria, indexRange: IntRange): List<ImageDescriptor> {
-        return emptyList() // TODO: Stub
-    }
-
-    override fun getCollection(
-        searchCriteria: ImagesRepo.SearchCriteria,
+    private suspend fun footageEntities(
+        searchCriteria: SearchCriteria,
         indexRange: IntRange
-    ): List<ImageDescriptor> {
-        return emptyList() // TODO: Stub
+    ) = dao.getFootageBy(
+        afterDate = searchCriteria.afterDate,
+        beforeDate = searchCriteria.beforeDate,
+        captionIncludes = searchCriteria.captionIncludes,
+        startIndex = indexRange.first,
+        size = indexRange.size
+    ).map { it.toImageDescriptor() }
+}
+
+class CollectionRepoImpl(
+    private val dao: CollectionDao,
+    private val footageDao: FootageDao,
+    private val api: ImagesApi
+) : ImagesRepo.Channel.Collection() {
+    override suspend fun add(ids: List<String>) {
+        val scope = CoroutineScope(Dispatchers.IO)
+        scope.launch {
+            val imageDescriptors =
+                footageDao.getFootageByIds(ids).map { it.toImageDescriptor() }
+            val collection: List<ImageApiDescriptor> =
+                api.markMovedToFootage(imageDescriptors.map { it.id })
+            dao.insertCollection(collection.map {
+                it.toImageDescriptor().toCollectionEntity()
+            })
+        }
     }
 
-    override fun addToFootage(imageDescriptor: List<ImageDescriptor>) {
-        TODO("Not yet implemented")
+    override suspend fun get(
+        searchCriteria: SearchCriteria,
+        indexRange: IntRange
+    ): Flow<List<ImageDescriptor>> {
+        val scope = CoroutineScope(Dispatchers.IO)
+        return flow {
+            val footage = scope.async {
+                // get data from server
+                api.getCollection(searchCriteria, indexRange).map { it.toImageDescriptor() }
+            }
+            var fromDb = collectionEntities(searchCriteria, indexRange)
+            emit(fromDb)
+
+            footageDao.insertFootage(footage.await().map { it.toFootageEntity() })
+
+            fromDb = collectionEntities(searchCriteria, indexRange)
+            emit(fromDb)
+        }
     }
 
-    override fun addToCollection(imageDescriptor: List<ImageDescriptor>) {
-        TODO("Not yet implemented")
-    }
-
-    private fun FootageEntity.toImageDescriptor(): ImageDescriptor {
-        return ImageDescriptor(
-            uri = Uri.parse(uri),
-            caption = caption,
-            shotDate = date,
-            orientation = orientation,
-            lat = lat,
-            lon = lon,
-            width = width,
-            height = height,
-            camera = camera,
-            focalLength = focalLength,
-
-            )
-    }
-
-    private fun ImageDescriptor.toFootageEntity(): FootageEntity {
-        return FootageEntity(
-            uri = uri.toString(),
-            caption = caption,
-            date = shotDate,
-            orientation = orientation,
-            lat = lat,
-            lon = lon,
-            width = width,
-            height = height,
-            camera = camera,
-            focalLength = focalLength,
+    override suspend fun getSize(searchCriteria: SearchCriteria): Int {
+        return dao.countCollectionBy(
+            searchCriteria.afterDate,
+            searchCriteria.beforeDate,
+            searchCriteria.captionIncludes
         )
     }
+
+    private suspend fun collectionEntities(
+        searchCriteria: SearchCriteria,
+        indexRange: IntRange
+    ) = dao.getCollectionBy(
+        afterDate = searchCriteria.afterDate,
+        beforeDate = searchCriteria.beforeDate,
+        captionIncludes = searchCriteria.captionIncludes,
+        startIndex = indexRange.first,
+        size = indexRange.size
+    ).map { it.toImageDescriptor() }
 }

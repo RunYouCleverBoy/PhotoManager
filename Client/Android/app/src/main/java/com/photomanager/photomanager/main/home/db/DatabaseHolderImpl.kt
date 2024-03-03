@@ -6,7 +6,12 @@ import javax.inject.Inject
 
 class DatabaseHolderImpl @Inject constructor(@ApplicationContext private val appContext: Context) :
     DatabaseHolder {
-    override val database: PhotoDatabase by lazy { getDatabase() }
+    override var database: PhotoDatabase = getDatabase()
+        get() = field.takeIf { it.isOpen } ?: getDatabase().also { field = it }
+
+    override fun closeDatabase() {
+        database.close()
+    }
 
     private fun getDatabase(): PhotoDatabase {
         return androidx.room.Room.databaseBuilder(

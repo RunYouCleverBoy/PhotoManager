@@ -17,34 +17,61 @@ class HomeViewModel @Inject constructor(
     override fun dispatchEvent(event: HomeEvent) {
         when (event) {
             is HomeEvent.OnImageClicked -> emit(HomeAction.OpenImage(event.uri))
-            is HomeEvent.OnImagesPicked -> imagesRepo.addToFootage(event.uris.map {
-                imageProcessorRepo.processImage(it)
+            is HomeEvent.OnImagesPicked -> addToFootage(event)
+            is HomeEvent.OnAddToCollection -> addToCollection(event.ids)
+
+            HomeEvent.OnApproachingFootageWindowEnd -> appendMoreData(toCollection = false)
+            HomeEvent.OnApproachingCollectionWindowEnd -> appendMoreData(toCollection = true)
+        }
+    }
+
+    private fun addToCollection(ids: List<String>) {
+        viewModelScope.launch {
+            val idSet = ids.toSet()
+            imagesRepo.collection.add(state.value.footage.filter {
+                it.id !in idSet
+            }.map { it.id })
+        }
+    }
+
+    private fun addToFootage(event: HomeEvent.OnImagesPicked) {
+        viewModelScope.launch {
+            imagesRepo.footage.add(event.uris.map { uri ->
+                imageProcessorRepo.processExif(uri)
             })
-
-            is HomeEvent.OnApproachingFootageWindowEnd -> appendMoreDataToFootage()
-            is HomeEvent.OnApproachingCollectionWindowEnd -> appendMoreDataToCollection()
         }
     }
 
-    private fun appendMoreDataToFootage() {
-        val size = state.value.footage.size
+    private fun appendMoreData(toCollection: Boolean) {
+        if (state.value.isBusy) return
+        stateMutable.update { state -> state.copy(isBusy = true) }
+        val curr = if (toCollection) state.value.collection else state.value.footage
+        val size = curr.size
         val range = IntRange(size, size + PAGE_SIZE)
-        viewModelScope.launch {
-            imagesRepo.getFootage(state.value.footageSearchCriteria, range).collect { lst ->
-                val mapped = lst.map { ImageUIDescriptor(it.uri, it.caption)}
-                stateMutable.update { state -> state.copy(footage = state.footage + mapped) }
-            }
+        val searchCriteria = if (toCollection) state.value.collectionSearchCriteria else state.value.footageSearchCriteria
+        val repo = if (toCollection) {
+            imagesRepo.collection
+        } else {
+            imagesRepo.footage
         }
-    }
-
-    private fun appendMoreDataToCollection() {
-        val size = state.value.collection.size
-        val range = IntRange(size, size + PAGE_SIZE)
         viewModelScope.launch {
-            imagesRepo.getFootage(state.value.collectionSearchCriteria, range).collect { lst ->
-                val mapped = lst.map { ImageUIDescriptor(it.uri, it.caption)}
-                stateMutable.update { state -> state.copy(collection = state.collection + mapped) }
+            val count = repo.getSize(searchCriteria)
+            if (count == 0) {
+                return@launch
             }
+            repo.get(searchCriteria, range).collect { lst ->
+                val ids = curr.map { it.id }.toSet()
+                val mapped = lst
+                    .filter { it.id !in ids }
+                    .map { ImageUIDescriptor(it.id, it.uri, it.caption) }
+                if (toCollection) {
+                    stateMutable.update { state -> state.copy(collection = state.collection + mapped) }
+                } else {
+                    stateMutable.update { state -> state.copy(footage = state.footage + mapped) }
+                }
+            }
+        }.invokeOnCompletion {
+            stateMutable.update { state -> state.copy(isBusy = false) }
         }
     }
 

@@ -1,25 +1,22 @@
 package com.photomanager.photomanager.main.home.repository
 
 import com.photomanager.photomanager.main.home.model.ImageDescriptor
+import com.photomanager.photomanager.main.home.model.SearchCriteria
 import kotlinx.coroutines.flow.Flow
-import java.util.Date
 
 interface ImagesRepo {
-    open class SearchCriteria(
-        val captionIncludes: String? = null,
-        val afterDate: Date? = null,
-        val beforeDate: Date? = null
-    )
+    sealed interface Channel {
+        suspend fun get(searchCriteria: SearchCriteria, indexRange: IntRange): Flow<List<ImageDescriptor>>
+        suspend fun getSize(searchCriteria: SearchCriteria): Int
 
-    fun getFootage(
-        searchCriteria: SearchCriteria, indexRange: IntRange
-    ): Flow<List<ImageDescriptor>>
+        abstract class Footage : Channel {
+            abstract suspend fun add(imageDescriptor: List<ImageDescriptor>)
+        }
+        abstract class Collection : Channel {
+            abstract suspend fun add(ids: List<String>)
+        }
+    }
 
-    fun getCollection(
-        searchCriteria: SearchCriteria,
-        indexRange: IntRange
-    ): List<ImageDescriptor>
-
-    fun addToFootage(imageDescriptor: List<ImageDescriptor>)
-    fun addToCollection(imageDescriptor: List<ImageDescriptor>)
+    val footage: Channel.Footage
+    val collection: Channel.Collection
 }

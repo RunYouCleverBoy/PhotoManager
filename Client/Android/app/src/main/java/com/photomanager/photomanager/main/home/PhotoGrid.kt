@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -23,12 +24,18 @@ import timber.log.Timber
 @Composable
 fun PhotoGrid(
     imagesForGrid: List<ImageUIDescriptor>,
+    pageSize : Int = 100,
     onApproachingWindowEnd: (Int) -> Unit = {},
     onImageClicked: (Uri) -> Unit = {}
 ) {
     LazyVerticalGrid(modifier = Modifier.fillMaxSize(), columns = GridCells.Fixed(3)) {
         items(imagesForGrid.size) { index ->
             val (uri, caption) = imagesForGrid[index]
+            LaunchedEffect(index / pageSize) {
+                if (index > imagesForGrid.size - pageSize) {
+                    onApproachingWindowEnd(index)
+                }
+            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

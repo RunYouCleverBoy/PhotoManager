@@ -10,6 +10,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.photomanager.photomanager.main.nav.MainNavPath
 
 @Composable
 fun HomeScreen(onClicked: (Uri) -> Unit) {
@@ -25,7 +29,16 @@ fun HomeScreen(onClicked: (Uri) -> Unit) {
 
     val state by vm.state.collectAsState()
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        FootageScreen(vm::dispatchEvent)
+        NavHost(navController = rememberNavController(), startDestination = MainNavPath.HomeFootage.navTemplate) {
+            composable(MainNavPath.HomeFootage.navTemplate) {
+                FootageScreen(state.footage, vm::dispatchEvent)
+            }
+
+            composable(MainNavPath.HomeCollection.navTemplate) {
+                FootageScreen(state.collection, vm::dispatchEvent)
+            }
+        }
+
     }
 }
 

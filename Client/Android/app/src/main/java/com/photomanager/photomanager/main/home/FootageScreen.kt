@@ -31,6 +31,6 @@ fun FootageScreen(
     }
 
     PhotoGrid(items, onApproachingWindowEnd = { index ->
-        dispatchEvent(HomeEvent.OnApproachingFootageWindowEnd(index))
+        dispatchEvent(HomeEvent.OnApproachingFootageWindowEnd)
     }) { dispatchEvent(HomeEvent.OnImageClicked(it)) }
 }

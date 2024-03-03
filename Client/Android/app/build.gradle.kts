@@ -4,6 +4,7 @@ plugins {
     id("com.google.devtools.ksp")
 //    kotlin("kapt")
     id("com.google.dagger.hilt.android")
+    kotlin("plugin.serialization") version "1.9.20"
 }
 
 android {
@@ -105,6 +106,9 @@ dependencies {
 
     // Exif
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    // Kotlinx-serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
