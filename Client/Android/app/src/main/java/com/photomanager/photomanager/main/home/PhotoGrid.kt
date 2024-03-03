@@ -30,7 +30,7 @@ fun PhotoGrid(
 ) {
     LazyVerticalGrid(modifier = Modifier.fillMaxSize(), columns = GridCells.Fixed(3)) {
         items(imagesForGrid.size) { index ->
-            val (uri, caption) = imagesForGrid[index]
+            val imageDescriptor = imagesForGrid[index]
             LaunchedEffect(index / pageSize) {
                 if (index > imagesForGrid.size - pageSize) {
                     onApproachingWindowEnd(index)
@@ -42,6 +42,7 @@ fun PhotoGrid(
                     .height(200.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                val uri = imageDescriptor.uri
                 AsyncImage(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -56,7 +57,7 @@ fun PhotoGrid(
                         index
                     )
                 )
-                Text(text = caption, modifier = Modifier.fillMaxWidth())
+                Text(text = imageDescriptor.caption, modifier = Modifier.fillMaxWidth())
             }
         }
     }
