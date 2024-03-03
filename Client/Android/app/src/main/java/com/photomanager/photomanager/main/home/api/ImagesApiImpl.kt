@@ -5,7 +5,7 @@ import io.ktor.client.HttpClient
 import javax.inject.Inject
 
 class ImagesApiImpl @Inject constructor(
-    private val ktorClient: HttpClient
+    private val client: HttpClient
 ) : ImagesApi {
     override fun getFootage(
         searchCriteria: SearchCriteria,

@@ -12,9 +12,6 @@ import java.util.Date
 @Dao
 @TypeConverters(DateConverter::class)
 interface FootageDao {
-    @Query("SELECT * FROM Footage LIMIT :size OFFSET :startIndex")
-    suspend fun getAllFootage(startIndex: Int, size: Int): List<FootageEntity>
-
     @Query("SELECT * FROM Footage WHERE id IN (:ids)")
     suspend fun getFootageByIds(ids: List<String>): List<FootageEntity>
 
@@ -51,9 +48,6 @@ interface FootageDao {
 @Dao
 @TypeConverters(DateConverter::class)
 interface CollectionDao {
-    @Query("SELECT * FROM Collection LIMIT :size OFFSET :startIndex")
-    suspend fun getAllCollections(startIndex: Int, size: Int): List<CollectionEntity>
-
     @Query("SELECT * FROM Collection WHERE id = :id")
     suspend fun getCollectionById(id: Int): CollectionEntity
 
