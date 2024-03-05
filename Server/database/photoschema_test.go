@@ -74,14 +74,5 @@ func TestPhotoSearchCriteriaFromOptions(t *testing.T) {
 	assert.Equal(t, expectedBuilder.build(), result)
 }
 
-type PhotoFilterLocation = struct {
-	Geolocation models.Geolocation `json:"geolocation,omitempty"`
-	Radius      float64            `json:"radius,omitempty"`
-}
-
-type OwnedPhotoFilter = struct {
-	OnlyMine      *bool   `json:"only_mine,omitempty"`
-	IsPublic      *bool   `json:"is_public,omitempty"`
-	UpvoteGrade   *int8   `json:"upvote_grade,omitempty"`
-	WorkflowStage *string `json:"workflow_stage,omitempty"`
-}
+type PhotoFilterLocation = models.PhotoSearchLocation
+type OwnedPhotoFilter = models.PhotoSearchOwnedPhotoFilter
