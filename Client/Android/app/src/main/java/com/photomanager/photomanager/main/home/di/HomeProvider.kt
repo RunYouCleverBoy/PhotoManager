@@ -41,4 +41,7 @@ abstract class HomeProvider {
 
     @Provides
     fun provideKtorClient(): HttpClient = KtorFactory.createKtorClient()
+
+    @Provides
+    fun provideHttpConfiguration(): KtorFactory.Configuration = KtorFactory.Configuration("http://localhost:8080")
 }

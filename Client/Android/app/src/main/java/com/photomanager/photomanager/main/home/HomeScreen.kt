@@ -35,10 +35,20 @@ fun HomeScreen(onClicked: (Uri) -> Unit) {
             }
 
             composable(MainNavPath.HomeCollection.navTemplate) {
-                FootageScreen(state.collection, vm::dispatchEvent)
+                CollectionsScreen(state.collection, vm::dispatchEvent)
             }
         }
 
     }
+}
+
+@Composable
+fun CollectionsScreen(
+    collection: List<ImageUIDescriptor>,
+    dispatchEvent: (HomeEvent) -> Unit
+) {
+    PhotoGrid(collection, onApproachingWindowEnd = {
+        dispatchEvent(HomeEvent.OnApproachingCollectionWindowEnd)
+    }) { dispatchEvent(HomeEvent.OnImageClicked(it)) }
 }
 

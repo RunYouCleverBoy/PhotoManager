@@ -77,9 +77,11 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    implementation("io.ktor:ktor-client-core:2.3.8")
-    implementation("io.ktor:ktor-client-android:2.3.8")
-    implementation("io.ktor:ktor-client-logging:2.3.8")
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-android:$ktorVersion")
+    implementation("io.ktor:ktor-client-logging:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
 
     val navVersion: String by rootProject.extra
     implementation("androidx.navigation:navigation-compose:2.7.7")
