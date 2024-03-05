@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"slices"
 
 	"github.com/gin-gonic/gin"
@@ -17,9 +18,14 @@ const (
 	RoleUser  Role = models.RoleUser
 )
 
+var (
+	ErrorMissingToken = errors.New("missing token")
+	ErrorBadHeader    = errors.New("bad header value given")
+	ErrorBadToken     = errors.New("bad token")
+)
+
 const CallingUserContextKey = "CallingUser"
 const SubjectUserContextKey = "SubjectUser"
-const CallingUserIdContextKey = utils.CallingUserIdContextKey
 
 type Role = models.Role
 
@@ -191,7 +197,7 @@ func respondToError(ctx *gin.Context, err error) {
 		ctx.JSON(400, gin.H{"message": "invalid user", "error": err.Error()})
 	case database.ErrNoDocuments:
 		ctx.JSON(404, gin.H{"message": "not found", "error": err.Error()})
-	case utils.ErrorBadHeader, utils.ErrorMissingToken, utils.ErrorBadToken:
+	case ErrorBadHeader, ErrorMissingToken, ErrorBadToken:
 		ctx.JSON(401, gin.H{"message": "unauthorized", "error": err.Error()})
 	default:
 		ctx.JSON(500, gin.H{"message": "error", "error": err.Error()})

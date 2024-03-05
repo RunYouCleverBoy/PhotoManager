@@ -8,7 +8,6 @@ import (
 	"playgrounds.com/photoalbums"
 	"playgrounds.com/photos"
 	"playgrounds.com/user"
-	"playgrounds.com/utils"
 )
 
 func main() {
@@ -23,7 +22,7 @@ func main() {
 
 	env := environment.NewFromEnv()
 	db, err := database.NewDb(env.DatabaseURL, env.DatabaseName)
-	authMiddleware := utils.AuthMiddleware(&env.JWTSecret)
+	authMiddleware := auth.AuthMiddleware(&env.JWTSecret)
 
 	if err != nil {
 		panic(err)
