@@ -5,7 +5,8 @@ import com.photomanager.photomanager.main.home.ktor.KtorFactory
 import com.photomanager.photomanager.main.home.model.SearchCriteria
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import javax.inject.Inject
 
 class ImagesApiImpl @Inject constructor(
@@ -18,7 +19,9 @@ class ImagesApiImpl @Inject constructor(
             .buildUpon()
             .appendPath("photos")
             .build().toString()
-        val result = client.get(urlString).body<String>()
+        val result = client.post(urlString) {
+            setBody(searchCriteria)
+        }.body<String>()
         return emptyList()
     }
 
