@@ -241,7 +241,7 @@ func photoSearchCriteriaFromOptions(selfId *primitive.ObjectID, options *models.
 		bsonBuilder.addValIf("workflow.stage", ownerOpts.WorkflowStage != nil, *ownerOpts.WorkflowStage)
 		bsonBuilder.addValIf("workflow.upvote_grade", ownerOpts.UpvoteGrade != nil, *ownerOpts.UpvoteGrade)
 		bsonBuilder.addValIf("is_public", ownerOpts.IsPublic != nil, *ownerOpts.IsPublic)
-		if options.OwnedPhotoFilter.OnlyMine != nil && *options.OwnedPhotoFilter.OnlyMine {
+		if ownerOpts.OnlyMine != nil && *ownerOpts.OnlyMine {
 			bsonBuilder.addVal("owner", bson.D{{Key: "$eq", Value: *selfId}})
 		}
 	}

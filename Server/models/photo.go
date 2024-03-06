@@ -49,23 +49,27 @@ type PhotoModel struct {
 	Tags      []string             `json:"tags" bson:"tags,omitempty"`
 }
 
+type PhotoSearchLocation struct {
+	Geolocation Geolocation `json:"geolocation,omitempty"`
+	Radius      float64     `json:"radius,omitempty"`
+}
+
+type PhotoSearchOwnedPhotoFilter struct {
+	OnlyMine      *bool   `json:"only_mine,omitempty"`
+	IsPublic      *bool   `json:"is_public,omitempty"`
+	UpvoteGrade   *int8   `json:"upvote_grade,omitempty"`
+	WorkflowStage *string `json:"workflow_stage,omitempty"`
+}
+
 type PhotoSearchOptions struct {
-	ShotAfter      *int64  `json:"shot_after,omitempty"`
-	ShotBefore     *int64  `json:"shot_before,omitempty"`
-	ModifiedAround *int64  `json:"modified_around,omitempty"`
-	Camera         *string `json:"camera,omitempty"`
-	Location       *struct {
-		Geolocation Geolocation `json:"geolocation,omitempty"`
-		Radius      float64     `json:"radius,omitempty"`
-	} `json:"location,omitempty"`
-	LocationContains   *string `json:"location_contains,omitempty"`
-	CommentsContaining *string `json:"comments_containing,omitempty"`
-	OwnedPhotoFilter   *struct {
-		OnlyMine      *bool   `json:"only_mine,omitempty"`
-		IsPublic      *bool   `json:"is_public,omitempty"`
-		UpvoteGrade   *int8   `json:"upvote_grade,omitempty"`
-		WorkflowStage *string `json:"workflow_stage,omitempty"`
-	} `json:"owned_photo_filter,omitempty"`
+	ShotAfter          *int64                       `json:"shot_after,omitempty"`
+	ShotBefore         *int64                       `json:"shot_before,omitempty"`
+	ModifiedAround     *int64                       `json:"modified_around,omitempty"`
+	Camera             *string                      `json:"camera,omitempty"`
+	Location           *PhotoSearchLocation         `json:"location,omitempty"`
+	LocationContains   *string                      `json:"location_contains,omitempty"`
+	CommentsContaining *string                      `json:"comments_containing,omitempty"`
+	OwnedPhotoFilter   *PhotoSearchOwnedPhotoFilter `json:"owned_photo_filter,omitempty"`
 }
 
 type AlbumSearchCriteria struct {

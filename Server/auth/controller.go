@@ -105,7 +105,7 @@ func loginWithToken(ctx *gin.Context) {
 		return
 	}
 
-	claims := utils.AuthClaims{}
+	claims := AuthClaims{}
 	if err := claims.Parse(refreshToken); err != nil {
 		ctx.JSON(401, gin.H{"message": "invalid refresh token", "error": err.Error()})
 		return
@@ -164,15 +164,14 @@ func register(ctx *gin.Context) {
 }
 
 func logout(ctx *gin.Context) {
-	objIdValue, exists := ctx.Get(utils.CallingUserIdContextKey)
-	if !exists {
+	userId := utils.CollectIdFromAuthentication(ctx)
+	if userId == nil {
 		ctx.JSON(400, gin.H{"message": "invalid id", "error": "Invalid JWT"})
 		return
 	}
 
-	id := objIdValue.(primitive.ObjectID)
 	emptyString := ""
-	user.UpdateCredentials(&id, nil, &emptyString, &emptyString)
+	user.UpdateCredentials(userId, nil, &emptyString, &emptyString)
 	ctx.JSON(200, gin.H{"message": "logout"})
 }
 
@@ -198,8 +197,8 @@ func createTokens(userObj *user.User) (*string, *string, error) {
 	return token, refreshToken, nil
 }
 
-func createToken(user *user.User, expirationDuration *time.Duration) (*string, *utils.AuthClaims, error) {
-	authClaims := utils.AuthClaims{}
+func createToken(user *user.User, expirationDuration *time.Duration) (*string, *AuthClaims, error) {
+	authClaims := AuthClaims{}
 	authClaims.Id = &user.ID
 	expiration := time.Now().Add(*expirationDuration)
 	authClaims.Expiration = &expiration
