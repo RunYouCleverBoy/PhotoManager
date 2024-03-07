@@ -21,7 +21,7 @@ type geojson struct {
 	Coordinates []float64 `bson:"coordinates"`
 }
 
-func (g Geolocation) MarshalBSON() ([]byte, error) {
+func (g *Geolocation) MarshalBSON() ([]byte, error) {
 	marshalled, err := bson.Marshal(geojson{"Point", []float64{g.Longitude, g.Latitude}})
 	return marshalled, err
 }
