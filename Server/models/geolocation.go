@@ -16,18 +16,18 @@ type Place struct {
 	Country string   `json:"country" bson:"country"`
 }
 
-type geojson struct {
+type geoJson struct {
 	Type        string    `bson:"type"`
 	Coordinates []float64 `bson:"coordinates"`
 }
 
 func (g *Geolocation) MarshalBSON() ([]byte, error) {
-	marshalled, err := bson.Marshal(geojson{"Point", []float64{g.Longitude, g.Latitude}})
+	marshalled, err := bson.Marshal(geoJson{"Point", []float64{g.Longitude, g.Latitude}})
 	return marshalled, err
 }
 
 func (g *Geolocation) UnmarshalBSON(data []byte) error {
-	unmarshalled := geojson{}
+	unmarshalled := geoJson{}
 	err := bson.Unmarshal(data, &unmarshalled)
 	if err != nil {
 		return err
