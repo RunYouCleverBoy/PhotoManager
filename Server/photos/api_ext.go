@@ -15,7 +15,7 @@ func (req *CreatePhotoRequest) toPhotoModel(ownerId primitive.ObjectID) models.P
 		Metadata:  *req.Metadata,
 		WorkFlow: models.WorkFlow{
 			UpvoteGrade:   0,
-			WorkflowStage: models.WorkflowStateFootage,
+			WorkflowStage: models.WorkflowStageFootage,
 		},
 		Ancestor: objectId, // A footage is its own ancestor
 		Tags:     req.Tags,

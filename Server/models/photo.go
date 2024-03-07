@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	WorkflowStateFootage    = "footage"
-	WorkflowStateCollection = "collection"
+	WorkflowStageFootage    = "footage"
+	WorkflowStageCollection = "collection"
 	WorkflowStageAlbum      = "album"
 )
 
