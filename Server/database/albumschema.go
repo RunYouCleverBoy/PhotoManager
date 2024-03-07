@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"playgrounds.com/photoalbums"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,25 +18,34 @@ type AlbumCollection struct {
 func initAlbumSchema(collection *AlbumCollection) {
 	album := collection.Albums
 	ctx := context.Background()
-	album.Indexes().CreateOne(ctx, mongo.IndexModel{
+	if _, err := album.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.D{{Key: "name", Value: 1}},
-	})
-	album.Indexes().CreateOne(ctx, mongo.IndexModel{
+	}); err != nil {
+		return
+	}
+	if _, err := album.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.D{{Key: "owner", Value: 1}},
-	})
+	}); err != nil {
+		return
+	}
 }
 
-func (a *AlbumCollection) GetAlbumsBy(criteria *models.AlbumSearchCriteria) (*[]models.PhotoAlbum, error) {
+func (a *AlbumCollection) GetAlbumsBy(criteria *photoalbums.AlbumSearchCriteria) (*[]models.PhotoAlbum, error) {
 	result := make([]models.PhotoAlbum, 0)
 
 	ctx := context.Background()
-	bson := albumSearchCriteriaFromOptions(criteria)
-	cursor, err := a.Albums.Find(ctx, bson)
+	optionsBson := albumSearchCriteriaFromOptions(criteria)
+	cursor, err := a.Albums.Find(ctx, optionsBson)
 	if err != nil {
 		return nil, err
 	}
 
-	defer cursor.Close(ctx)
+	defer func(cursor *mongo.Cursor, ctx context.Context) {
+		if err := cursor.Close(ctx); err != nil {
+			return
+		}
+	}(cursor, ctx)
+
 	for cursor.Next(ctx) {
 		var album models.PhotoAlbum
 		if err := cursor.Decode(&album); err != nil {
@@ -84,7 +94,7 @@ func (a *AlbumCollection) DeleteAlbum(albumId *primitive.ObjectID) error {
 	return err
 }
 
-func albumSearchCriteriaFromOptions(options *models.AlbumSearchCriteria) *bson.D {
+func albumSearchCriteriaFromOptions(options *photoalbums.AlbumSearchCriteria) *bson.D {
 	bsonBuilder := bsonBuilder{data: bson.D{}}
 
 	bsonBuilder.addValIf("owner", options.OwnerID != nil, options.OwnerID)

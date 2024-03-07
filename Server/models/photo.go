@@ -71,10 +71,3 @@ type PhotoSearchOptions struct {
 	CommentsContaining *string                      `json:"comments_containing,omitempty"`
 	OwnedPhotoFilter   *PhotoSearchOwnedPhotoFilter `json:"owned_photo_filter,omitempty"`
 }
-
-type AlbumSearchCriteria struct {
-	OwnerID          *primitive.ObjectID `json:"owner_id,omitempty"`
-	NameRegex        *string             `json:"name,omitempty"`
-	DescriptionRegex *string             `json:"description,omitempty"`
-	VisibilityTo     *primitive.ObjectID `json:"visibility_to,omitempty"`
-}
