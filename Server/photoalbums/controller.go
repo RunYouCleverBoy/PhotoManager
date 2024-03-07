@@ -26,7 +26,7 @@ func Setup(albumCollection *database.AlbumCollection, photoCollection *database.
 
 func GetMyAlbums(c *gin.Context) {
 	userId := utils.CollectIdFromAuthentication(c)
-	albums, err := albums.GetAlbumsBy(&models.AlbumSearchCriteria{OwnerID: userId})
+	albums, err := albums.GetAlbumsBy(&AlbumSearchCriteria{OwnerID: userId})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

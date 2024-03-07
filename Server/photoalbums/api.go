@@ -11,3 +11,10 @@ type AddOrRemovePhotosRequestBody struct {
 	AddPhotos    []primitive.ObjectID `json:"addPhotos"`
 	RemovePhotos []primitive.ObjectID `json:"removePhotos"`
 }
+
+type AlbumSearchCriteria struct {
+	OwnerID          *primitive.ObjectID `json:"owner_id,omitempty"`
+	NameRegex        *string             `json:"name,omitempty"`
+	DescriptionRegex *string             `json:"description,omitempty"`
+	VisibilityTo     *primitive.ObjectID `json:"visibility_to,omitempty"`
+}
