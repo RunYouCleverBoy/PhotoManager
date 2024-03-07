@@ -3,6 +3,7 @@ package com.photomanager.photomanager.main.home.model
 import android.net.Uri
 import java.util.Date
 
+// TODO: WRONG! Do it again!
 data class ImageDescriptor(
     val id: String, // Unique identifier
     val uri: Uri,

@@ -12,3 +12,8 @@ gradlePlugin {
     }
 }
 
+tasks.register("runGoCompiler") {
+    group = "custom"
+    description = "Run Gradle plugin"
+    dependsOn("importModelsFromGo")
+}

@@ -2,12 +2,10 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import java.io.File
 
-
-
 class ImportModelsFromGo : Plugin<Project> {
     override fun apply(target: Project) {
-        target.task("importModelsFromGo") {
-            doLast {
+        target.tasks.register("importModelsFromGo") {
+            if (true) {
                 val goModels = File("../../Server/models")
                 val kotlinModels =
                     File("app/src/main/java/com/photomanager/photomanager/main/home/api")
@@ -47,18 +45,6 @@ class ImportModelsFromGo : Plugin<Project> {
         return mapIndexed { i, c -> if (i == 0) c.lowercase() else c }.joinToString("")
     }
 
-    sealed class LineType(val kotlinLine: String) {
-        object SerializableAnnotation : LineType("@Serializable")
-        sealed class ClassDeclaration(val name: String, text: String) : LineType(text) {
-            class Data(name: String) : ClassDeclaration(name, "data class $name(")
-            class Regular(name: String) : ClassDeclaration(name, "class $name(")
-        }
-
-        class Field(line: String) : LineType(line)
-        class Comment(line: String) : LineType(line)
-        object ClassDeclarationEnd : LineType(")")
-    }
-
     private fun compile(goFile: File): List<String> {
         val result: MutableList<String> = mutableListOf()
         val group: MutableList<LineType> = mutableListOf()
@@ -75,6 +61,14 @@ class ImportModelsFromGo : Plugin<Project> {
                     group.add(LineType.ClassDeclaration.Data(name.largeCamel()))
                 }
 
+                line.matches(Regex("const\\s+\\(")) -> {
+                    if (group.isNotEmpty()) {
+                        group.clear()
+                    }
+                    group.add(LineType.SerializableAnnotation)
+                    group.add(LineType.ClassDeclaration.Enum(""))
+                }
+
                 fieldRegex.matches(line) -> {
                     val v = fieldRegex.find(line)?.groupValues!!
                     val name = v[1].smallCamel()
@@ -82,6 +76,7 @@ class ImportModelsFromGo : Plugin<Project> {
                     val jsonName = v[3]
                     val addedLine = when (type) {
                         "int" -> "@SerialName(\"$jsonName\") val $name: Int = 0"
+                        "int8" -> "@SerialName(\"$jsonName\") val $name: Int = 0"
                         "int64" -> "@SerialName(\"$jsonName\") val $name: Long = 0L"
                         "string" -> "@SerialName(\"$jsonName\") val $name: String = \"\""
                         "bool" -> "@SerialName(\"$jsonName\") val $name: Boolean = false"
@@ -105,7 +100,12 @@ class ImportModelsFromGo : Plugin<Project> {
                 }
 
                 line.matches(Regex("^}")) -> {
-                    group.add(LineType.ClassDeclarationEnd)
+                    val end = if (group.any{ it is LineType.ClassDeclaration && it.isInline}) {
+                        LineType.ClassDeclarationEnd.Inline
+                    } else {
+                        LineType.ClassDeclarationEnd.Braces
+                    }
+                    group.add(end)
                     val groupIsOk = group.verify()
                     if (groupIsOk) {
                         val reassembledLines = group.synthesize()
@@ -173,6 +173,22 @@ class ImportModelsFromGo : Plugin<Project> {
                     throw IllegalStateException("Unknown line type")
                 }
             }
+        }
+    }
+
+    sealed class LineType(val kotlinLine: String) {
+        object SerializableAnnotation : LineType("@Serializable")
+        sealed class ClassDeclaration(val isInline: Boolean, val name: String, text: String) : LineType(text) {
+            class Data(name: String) : ClassDeclaration(true, name, "data class $name(")
+            class Regular(name: String) : ClassDeclaration(true, name, "class $name(")
+            class Enum(name: String) : ClassDeclaration(true, name, "enum class $name {")
+        }
+
+        class Field(line: String) : LineType(line)
+        class Comment(line: String) : LineType(line)
+        sealed class ClassDeclarationEnd(text: String) : LineType(text) {
+            object Inline: ClassDeclarationEnd(")")
+            object Braces: ClassDeclarationEnd("}")
         }
     }
 }
