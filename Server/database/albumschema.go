@@ -2,8 +2,6 @@ package database
 
 import (
 	"context"
-	"playgrounds.com/photoalbums"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,6 +11,13 @@ import (
 
 type AlbumCollection struct {
 	Albums *mongo.Collection
+}
+
+type AlbumSearchCriteria struct {
+	OwnerID          *primitive.ObjectID `json:"owner_id,omitempty"`
+	NameRegex        *string             `json:"name,omitempty"`
+	DescriptionRegex *string             `json:"description,omitempty"`
+	VisibilityTo     *primitive.ObjectID `json:"visibility_to,omitempty"`
 }
 
 func initAlbumSchema(collection *AlbumCollection) {
@@ -30,7 +35,7 @@ func initAlbumSchema(collection *AlbumCollection) {
 	}
 }
 
-func (a *AlbumCollection) GetAlbumsBy(criteria *photoalbums.AlbumSearchCriteria) (*[]models.PhotoAlbum, error) {
+func (a *AlbumCollection) GetAlbumsBy(criteria *AlbumSearchCriteria) (*[]models.PhotoAlbum, error) {
 	result := make([]models.PhotoAlbum, 0)
 
 	ctx := context.Background()
@@ -94,7 +99,7 @@ func (a *AlbumCollection) DeleteAlbum(albumId *primitive.ObjectID) error {
 	return err
 }
 
-func albumSearchCriteriaFromOptions(options *photoalbums.AlbumSearchCriteria) *bson.D {
+func albumSearchCriteriaFromOptions(options *AlbumSearchCriteria) *bson.D {
 	bsonBuilder := bsonBuilder{data: bson.D{}}
 
 	bsonBuilder.addValIf("owner", options.OwnerID != nil, options.OwnerID)

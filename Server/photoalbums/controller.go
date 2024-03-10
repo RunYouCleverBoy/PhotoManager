@@ -26,7 +26,7 @@ func Setup(albumCollection *database.AlbumCollection, photoCollection *database.
 
 func GetMyAlbums(c *gin.Context) {
 	userId := utils.CollectIdFromAuthentication(c)
-	albums, err := albums.GetAlbumsBy(&AlbumSearchCriteria{OwnerID: userId})
+	albums, err := albums.GetAlbumsBy(&database.AlbumSearchCriteria{OwnerID: userId})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -157,6 +157,29 @@ func RequireAlbumOwner(paramName string) gin.HandlerFunc {
 		c.Set(AlbumContextKey, album)
 		c.Next()
 	}
+}
+
+func SearchAlbum(context *gin.Context) {
+	searchCriteria := AlbumSearchCriteria{}
+	databaseSearchCriteria := database.AlbumSearchCriteria{
+		OwnerID:          searchCriteria.OwnerID,
+		NameRegex:        searchCriteria.NameRegex,
+		DescriptionRegex: searchCriteria.DescriptionRegex,
+		VisibilityTo:     searchCriteria.VisibilityTo,
+	}
+
+	if err := context.Bind(searchCriteria); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	albums, err := albums.GetAlbumsBy(&databaseSearchCriteria)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	context.JSON(http.StatusOK, albums)
 }
 
 func RequireAlbumVisibility(paramName string) gin.HandlerFunc {
