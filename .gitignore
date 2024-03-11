@@ -5,3 +5,4 @@ Server/go.work.sum
 */SrcPhotos/*
 photosfiles/*
 /.idea
+*/out

@@ -1,0 +1,24 @@
+version: '1.0'
+services:
+  mongodb:
+    image: mongodb/mongodb-community-server
+    container_name: mongodb_photos
+    ports:
+      - '27017:27017'
+    volumes:
+      - dbdata6:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: IsThereAnybodyGoingToListenToMyStory
+      MONGO_INITDB_DATABASE: photos
+  server:
+    image: photo_server
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: photo_server
+    ports:
+      - '8000:8000'
+      
+volumes:
+  dbdata6:
