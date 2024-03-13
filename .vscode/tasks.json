@@ -22,7 +22,7 @@
       "command": "bash",
       "args": [
         "-c",
-        "cd ${workspaceFolder}/Server; docker compose down; docker system prune -f; docker compose up -d"
+        "cd ${workspaceFolder}/Server; docker compose down; docker system prune -f --volumes; docker rmi photo_server_amd64; docker compose up -d"
       ],
       "group": {
         "kind": "build",

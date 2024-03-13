@@ -69,6 +69,7 @@ func daysOrElse(valDays string, d time.Duration) time.Duration {
 
 func (e *Environment) String() string {
 	environmentMap := e.toMap()
+	environmentMap[SERVER_JWT_SECRET] = environmentMap[SERVER_JWT_SECRET][:10] + "..."
 	entries := utils.MapEntries(&environmentMap)
 	maxEntry := utils.MaxBy(entries, func(e *utils.MapEntry[string, string]) int {
 		return len(e.Key)
