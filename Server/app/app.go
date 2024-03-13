@@ -16,7 +16,7 @@ import (
 func main() {
 
 	env := environment.NewFromEnv(&environment.DefaultEnvironment)
-	log.Print(env)
+	log.Print("\n" + env.String())
 
 	db, err := database.NewDb(env.DatabaseURL, env.DatabaseName)
 	authMiddleware := auth.AuthMiddleware(&env.JWTSecret)
@@ -43,6 +43,5 @@ func main() {
 	auth.Setup(env)
 	auth.HandleRoutes(authApi, authMiddleware)
 
-	log.Printf("Server started on port %s", env.Port)
 	r.Run(fmt.Sprintf(":%s", env.Port))
 }

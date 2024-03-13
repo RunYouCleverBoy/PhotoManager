@@ -12,13 +12,22 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: IsThereAnybodyGoingToListenToMyStory
       MONGO_INITDB_DATABASE: photos
   server:
-    image: photo_server
+    image: photo_server_amd64
     build:
       context: .
       dockerfile: dockerfile
     container_name: photo_server
+    environment:
+      - SERVER_PORT=3000
+      - SERVER_DATABASE_URL=mongodb://root:IsThereAnybodyGoingToListenToMyStory@localhost:27017/
+      - SERVER_DATABASE_NAME=PhotoManager
+      - SERVER_JWT_SECRET=Sittin' in the stand of the sports arena, waiting for the show to begin Red lights, green lights, strawberry wine, a good friend of mine, follows the stars Venus and Mars are alright tonight
+      - SERVER_TOKEN_EXPIRATION=1
+      - SERVER_REFRESH_TOKEN_EXPIRATION=30
+    depends_on:
+      - mongodb
     ports:
-      - '8000:8000'
+      - '3000:3000'
       
 volumes:
   dbdata6:
