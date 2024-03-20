@@ -1,9 +1,14 @@
 package com.photomanager.photomanager.main.home.model
 
-import java.util.Date
-
 open class SearchCriteria(
-    val captionIncludes: String? = null,
-    val afterDate: Date? = null,
-    val beforeDate: Date? = null
+    val descriptionIncludes: String? = null,
+    val dateRange: LongRange = LongRange(0, Long.MAX_VALUE),
+    val locationNameContains: String?,
+    val latitudeRange: ClosedRange<Double> = -90.0..90.0,
+    val longitudeRange: ClosedRange<Double> = -180.0..180.0,
+    val camera: String? = null,
+    val commentsContaining: String? = null,
+    val rating: IntRange? = null,
+    val tag: String? = null,
+    val stage: WorkflowStage? = null,
 )

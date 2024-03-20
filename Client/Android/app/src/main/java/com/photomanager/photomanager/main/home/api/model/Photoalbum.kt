@@ -1,9 +1,8 @@
-package com.photomanager.photomanager.main.home.api
+package com.photomanager.photomanager.main.home.api.model
 
+import com.photomanager.photomanager.main.home.api.ObjectId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-
-typealias ObjectId = String
 
 @Serializable
 data class PhotoAlbum(

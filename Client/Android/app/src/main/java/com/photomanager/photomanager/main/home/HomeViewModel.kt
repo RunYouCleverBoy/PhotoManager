@@ -2,7 +2,7 @@ package com.photomanager.photomanager.main.home
 
 import androidx.lifecycle.viewModelScope
 import com.photomanager.photomanager.main.home.repository.ImageProcessorRepo
-import com.photomanager.photomanager.main.home.repository.ImagesRepo
+import com.photomanager.photomanager.main.home.repository.PhotoRepo
 import com.photomanager.photomanager.mvi.MVIViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.update
@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val imagesRepo: ImagesRepo,
+    private val photoRepo: PhotoRepo,
     private val imageProcessorRepo: ImageProcessorRepo
 ) : MVIViewModel<HomeState, HomeEvent, HomeAction>(HomeState()) {
     override fun dispatchEvent(event: HomeEvent) {
@@ -28,7 +28,7 @@ class HomeViewModel @Inject constructor(
     private fun addToCollection(ids: List<String>) {
         viewModelScope.launch {
             val idSet = ids.toSet()
-            imagesRepo.collection.add(state.value.footage.filter {
+            photoRepo.add(state.value.footage.filter {
                 it.id !in idSet
             }.map { it.id })
         }
@@ -36,9 +36,7 @@ class HomeViewModel @Inject constructor(
 
     private fun addToFootage(event: HomeEvent.OnImagesPicked) {
         viewModelScope.launch {
-            imagesRepo.footage.add(event.uris.map { uri ->
-                imageProcessorRepo.processExif(uri)
-            })
+            photoRepo
         }
     }
 

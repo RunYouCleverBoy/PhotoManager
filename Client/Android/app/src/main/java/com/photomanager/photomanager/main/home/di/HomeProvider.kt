@@ -1,16 +1,15 @@
 package com.photomanager.photomanager.main.home.di
 
+import PhotoRepoImpl
 import com.photomanager.photomanager.main.home.api.ImagesApi
 import com.photomanager.photomanager.main.home.api.ImagesApiImpl
-import com.photomanager.photomanager.main.home.db.CollectionDao
 import com.photomanager.photomanager.main.home.db.DatabaseHolder
 import com.photomanager.photomanager.main.home.db.DatabaseHolderImpl
-import com.photomanager.photomanager.main.home.db.FootageDao
+import com.photomanager.photomanager.main.home.db.dao.PhotoDao
 import com.photomanager.photomanager.main.home.ktor.KtorFactory
 import com.photomanager.photomanager.main.home.repository.ImageProcessorRepo
 import com.photomanager.photomanager.main.home.repository.ImageProcessorRepoImpl
-import com.photomanager.photomanager.main.home.repository.ImagesRepo
-import com.photomanager.photomanager.main.home.repository.ImagesRepoImpl
+import com.photomanager.photomanager.main.home.repository.PhotoRepo
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -22,7 +21,7 @@ import io.ktor.client.HttpClient
 @InstallIn(ViewModelComponent::class)
 abstract class HomeProvider {
     @Binds
-    abstract fun provideWorkImagesRepo(photoRepo: ImagesRepoImpl): ImagesRepo
+    abstract fun provideWorkImagesRepo(photoRepo: PhotoRepoImpl): PhotoRepo
 
     @Binds
     abstract fun provideDatabase(database: DatabaseHolderImpl): DatabaseHolder
@@ -34,14 +33,13 @@ abstract class HomeProvider {
     abstract fun provideServerApi(serverApi: ImagesApiImpl): ImagesApi
 
     @Provides
-    fun provideFootageDao(databaseHolder: DatabaseHolder): FootageDao = databaseHolder.database.footageDao()
-
-    @Provides
-    fun provideCollectionDao(databaseHolder: DatabaseHolder): CollectionDao = databaseHolder.database.collectionDao()
+    fun providePhotoDao(databaseHolder: DatabaseHolder): PhotoDao =
+        databaseHolder.database.photoDao()
 
     @Provides
     fun provideKtorClient(): HttpClient = KtorFactory.createKtorClient()
 
     @Provides
-    fun provideHttpConfiguration(): KtorFactory.Configuration = KtorFactory.Configuration("http://localhost:8080")
+    fun provideHttpConfiguration(): KtorFactory.Configuration =
+        KtorFactory.Configuration("http://localhost:8080")
 }

@@ -1,6 +1,7 @@
 package com.photomanager.photomanager.main.home.api
 
 import android.net.Uri
+import com.photomanager.photomanager.main.home.api.mappers.toPhotoSearchOptions
 import com.photomanager.photomanager.main.home.ktor.KtorFactory
 import com.photomanager.photomanager.main.home.model.ImageDescriptor
 import com.photomanager.photomanager.main.home.model.SearchCriteria
@@ -14,7 +15,7 @@ import javax.inject.Inject
 class ImagesApiImpl @Inject constructor(
     private val client: HttpClient, private val config: KtorFactory.Configuration
 ) : ImagesApi {
-    override suspend fun getFootage(
+    override suspend fun search(
         searchCriteria: SearchCriteria, indexRange: IntRange
     ): List<ImageDescriptor> {
         val urlString = Uri.parse(config.baseUrl)
@@ -22,7 +23,7 @@ class ImagesApiImpl @Inject constructor(
             .appendPath("photos")
             .build().toString()
         val result = client.post(urlString) {
-            setBody(searchCriteria)
+            setBody(searchCriteria.toPhotoSearchOptions())
         }
 
         return if (result.status.isSuccess()) {
@@ -30,16 +31,6 @@ class ImagesApiImpl @Inject constructor(
         } else {
             emptyList()
         }
-    }
-
-    override suspend fun getCollection(
-        searchCriteria: SearchCriteria, indexRange: IntRange
-    ): List<ImageDescriptor> {
-        return emptyList()
-    }
-
-    override suspend fun markMovedToFootage(images: List<String>): List<ImageDescriptor> {
-        return emptyList()
     }
 
     override suspend fun uploadImage(fromUri: Uri, uri: Uri) {

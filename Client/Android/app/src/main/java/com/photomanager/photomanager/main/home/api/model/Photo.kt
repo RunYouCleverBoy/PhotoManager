@@ -1,12 +1,12 @@
-package models
+package com.photomanager.photomanager.main.home.api.model
 
 import com.photomanager.photomanager.main.home.api.Geolocation
+import com.photomanager.photomanager.main.home.api.ObjectId
 import com.photomanager.photomanager.main.home.api.Place
 import com.photomanager.photomanager.main.home.api.typeconverters.WorkflowStageSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-typealias ObjectId = String
 
 @Serializable(with = WorkflowStageSerializer::class)
 enum class WorkflowStage(val value: String) {
@@ -65,10 +65,16 @@ data class PhotoSearchLocation(
 )
 
 @Serializable
+data class UpvoteGradeRange(
+   @SerialName("min") val min: Int,
+   @SerialName("max") val max: Int
+)
+
+@Serializable
 data class PhotoSearchOwnedPhotoFilter(
    @SerialName("only_mine") val onlyMine: Boolean?,
    @SerialName("is_public") val isPublic: Boolean?,
-   @SerialName("upvote_grade") val upvoteGrade: Byte?,
+   @SerialName("upvote_grade") val upvoteGrade: UpvoteGradeRange?,
    @SerialName("workflow_stage") val workflowStage: WorkflowStage?
 )
 
