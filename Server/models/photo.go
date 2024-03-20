@@ -54,11 +54,16 @@ type PhotoSearchLocation struct {
 	Radius      float64     `json:"radius,omitempty"`
 }
 
+type UpvoteGradeRange struct {
+	Min int8 `json:"min,omitempty"`
+	Max int8 `json:"max,omitempty"`
+}
+
 type PhotoSearchOwnedPhotoFilter struct {
-	OnlyMine      *bool   `json:"only_mine,omitempty"`
-	IsPublic      *bool   `json:"is_public,omitempty"`
-	UpvoteGrade   *int8   `json:"upvote_grade,omitempty"`
-	WorkflowStage *string `json:"workflow_stage,omitempty"`
+	OnlyMine      *bool             `json:"only_mine,omitempty"`
+	IsPublic      *bool             `json:"is_public,omitempty"`
+	UpvoteGrade   *UpvoteGradeRange `json:"upvote_grade_min,omitempty"`
+	WorkflowStage *string           `json:"workflow_stage,omitempty"`
 }
 
 type PhotoSearchOptions struct {

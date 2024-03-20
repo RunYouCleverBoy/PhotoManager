@@ -24,7 +24,7 @@ func TestPhotoSearchCriteriaFromOptions(t *testing.T) {
 	locationContains := "New York"
 	commentsContaining := "great photo"
 	workflowStage := "processed"
-	upvoteGrade := int8(5)
+	upvoteGrade := models.UpvoteGradeRange{Min: 0, Max: 5}
 	isPublic := true
 	onlyMine := true
 

@@ -2,6 +2,7 @@ package database
 
 import (
 	"go.mongodb.org/mongo-driver/bson"
+	"playgrounds.com/utils"
 )
 
 // bsonBuilder is a struct that represents a BSON builder.
@@ -19,6 +20,15 @@ func (builder *bsonBuilder) addVal(key string, value interface{}) *bsonBuilder {
 func (builder *bsonBuilder) addValIf(key string, condition bool, value interface{}) *bsonBuilder {
 	if condition {
 		builder.addVal(key, value)
+	}
+	return builder
+}
+
+func (builder *bsonBuilder) addRangeIf(key string, condition bool, pRange *utils.IntRange[int]) *bsonBuilder {
+	if condition {
+		from := pRange.Start()
+		to := pRange.End()
+		builder.addVal(key, bson.D{{Key: "$gte", Value: from}, {Key: "$lte", Value: to}})
 	}
 	return builder
 }
