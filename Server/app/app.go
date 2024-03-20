@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"playgrounds.com/auth"
 	"playgrounds.com/database"
@@ -12,38 +15,37 @@ import (
 
 func main() {
 
-	var fakeEnv environment.Environment = environment.Environment{
-		DatabaseURL:  "mongodb://localhost:27017/",
-		DatabaseName: "PhotoManager",
-		JWTSecret:    []byte("Sittin' in the stand of the sports arena, waiting for the show to begin Red lights, green lights, strawberry wine, a good friend of mine, follows the stars Venus and Mars are alright tonight"),
-	}
+	env := environment.NewFromEnv(&environment.DefaultEnvironment)
+	log.Printf("\n" + env.String())
 
-	environment.ApplyEnvironment(&fakeEnv)
-
-	env := environment.NewFromEnv()
 	db, err := database.NewDb(env.DatabaseURL, env.DatabaseName)
-	authMiddleware := auth.AuthMiddleware(&env.JWTSecret)
-
 	if err != nil {
 		panic(err)
 	}
+
+	authMiddleware := auth.AuthMiddleware(&env.JWTSecret)
 
 	r := gin.Default()
 	api := r.Group("/api")
 	userApi := api.Group("/user")
 	user.Setup(db.UserCollection())
 	user.HandleRoutes(userApi, authMiddleware)
+	log.Print("Server: User routes initialized")
 
 	photosApi := api.Group("/photos")
 	photos.Setup(db.PhotosCollection())
 	photos.HandleRoutes(photosApi, authMiddleware)
+	log.Print("Server: Photos routes initialized")
 
 	albumsApi := api.Group("/albums")
 	photoalbums.Setup(db.AlbumsCollection(), db.PhotosCollection())
 	photoalbums.HandleRoutes(albumsApi, authMiddleware)
+	log.Print("Server: Albums routes initialized")
 
 	authApi := api.Group("/auth")
 	auth.Setup(env)
 	auth.HandleRoutes(authApi, authMiddleware)
-	r.Run(":8000")
+	log.Print("Server: Auth routes initialized")
+
+	r.Run(fmt.Sprintf(":%s", env.Port))
 }

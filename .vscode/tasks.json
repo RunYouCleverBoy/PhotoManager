@@ -1,0 +1,44 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "Build for Ubuntu AMD64",
+      "command": "bash",
+      "args": [
+        "-c",
+        "cd ${workspaceFolder}/Server/app; env GOOS=linux GOARCH=amd64 go build -v -o ${workspaceFolder}/Server/out/go_linux_amd64"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "detail": "Run for Ubuntu over AMD64",
+      "problemMatcher": []
+    },
+    {
+      "type": "shell",
+      "label": "Docker Compose restart",
+      "command": "bash",
+      "args": [
+        "-c",
+        "cd ${workspaceFolder}/Server; docker compose down; docker system prune -f --volumes; docker rmi photo_server_amd64; docker compose up -d"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "detail": "Restart the docker compose",
+      "problemMatcher": []
+    },
+    {
+      "type": "go",
+      "label": "go: build package",
+      "command": "build",
+      "args": ["${fileDirname}"],
+      "problemMatcher": ["$go"],
+      "group": "build",
+      "detail": "cd /Users/yardena/Shmuel/Development/Projects/PhotoManager_Server; go build ${fileDirname}"
+    }
+  ]
+}

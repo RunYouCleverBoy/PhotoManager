@@ -16,16 +16,21 @@ var (
 	ErrInvisibleToUser = errors.New("photo is not visible to user")
 )
 
-func initPhotoSchema(collection *PhotosCollection) {
+func initPhotoSchema(collection *PhotosCollection) error {
 	photos := collection.Photos
 	ctx := context.Background()
-	photos.Indexes().CreateOne(ctx, mongo.IndexModel{
+	if _, err := photos.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys:    bson.D{{Key: "url", Value: 1}},
 		Options: options.Index().SetUnique(true),
-	})
-	photos.Indexes().CreateOne(ctx, mongo.IndexModel{
+	}); err != nil {
+		return err
+	}
+	if _, err := photos.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.D{{Key: "workflow_stage", Value: 1}},
-	})
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 type PhotoModel = models.PhotoModel

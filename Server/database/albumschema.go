@@ -20,19 +20,20 @@ type AlbumSearchCriteria struct {
 	VisibilityTo     *primitive.ObjectID `json:"visibility_to,omitempty"`
 }
 
-func initAlbumSchema(collection *AlbumCollection) {
+func initAlbumSchema(collection *AlbumCollection) error {
 	album := collection.Albums
 	ctx := context.Background()
 	if _, err := album.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.D{{Key: "name", Value: 1}},
 	}); err != nil {
-		return
+		return err
 	}
 	if _, err := album.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.D{{Key: "owner", Value: 1}},
 	}); err != nil {
-		return
+		return err
 	}
+	return nil
 }
 
 func (a *AlbumCollection) GetAlbumsBy(criteria *AlbumSearchCriteria) (*[]models.PhotoAlbum, error) {

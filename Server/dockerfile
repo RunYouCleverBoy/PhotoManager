@@ -1,0 +1,16 @@
+# Use the official Ubuntu 22.04 base image
+FROM ubuntu:22.04
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the project files to the container
+COPY ./out/go_linux_amd64 /app/exec/app
+
+RUN ls -l /app/exec/
+
+# Set the permissions for the project files
+RUN chmod +x /app/exec/app
+
+# Specify the command to run when the container starts
+CMD ["/app/exec/app"]
