@@ -244,7 +244,7 @@ func photoSearchCriteriaFromOptions(selfId *primitive.ObjectID, options *models.
 	if pOpts := options.OwnedPhotoFilter; pOpts != nil {
 		ownerOpts := *pOpts
 		bsonBuilder.addValIf("workflow.stage", ownerOpts.WorkflowStage != nil, *ownerOpts.WorkflowStage)
-		bsonBuilder.addValIf("workflow.upvote_grade", ownerOpts.UpvoteGrade != nil, *ownerOpts.UpvoteGrade)
+		bsonBuilder.addRangeIf("workflow.upvote_grade", ownerOpts.UpvoteGrade != nil, upvodeRangeConverter(ownerOpts.UpvoteGrade))
 		bsonBuilder.addValIf("is_public", ownerOpts.IsPublic != nil, *ownerOpts.IsPublic)
 		if ownerOpts.OnlyMine != nil && *ownerOpts.OnlyMine {
 			bsonBuilder.addVal("owner", bson.D{{Key: "$eq", Value: *selfId}})
@@ -252,4 +252,11 @@ func photoSearchCriteriaFromOptions(selfId *primitive.ObjectID, options *models.
 	}
 
 	return bsonBuilder.build()
+}
+
+func upvodeRangeConverter(upvoteRange *models.UpvoteGradeRange) *utils.IntRange[int] {
+	if upvoteRange == nil {
+		return nil
+	}
+	return &utils.IntRange[int]{Min: int(upvoteRange.Min), Max: int(upvoteRange.Max)}
 }
