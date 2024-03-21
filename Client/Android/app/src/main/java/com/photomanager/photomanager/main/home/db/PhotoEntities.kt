@@ -8,10 +8,10 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import androidx.room.TypeConverters
 
-@Entity(tableName = "photos", primaryKeys = ["id"])
+@Entity(tableName = "photos")
 @TypeConverters(CompositeTypeConverters::class)
 data class Photo(
-    @ColumnInfo(name="id") val id: String,
+    @PrimaryKey @ColumnInfo(name = "photo_id") val id: String,
     @ColumnInfo(name = "owner") val owner: String,
     @ColumnInfo(name = "url") val url: String,
     @ColumnInfo(name = "comments") val comments: Comments,
@@ -45,7 +45,7 @@ data class WorkFlow(
 
 @Entity(tableName = "photo_albums")
 data class PhotoAlbum(
-    @PrimaryKey val id: String,
+    @PrimaryKey @ColumnInfo(name = "album_id") val id: String,
     @ColumnInfo(name = "cover_image_url") val coverImageUrl: String,
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "description") val description: String,
@@ -53,16 +53,18 @@ data class PhotoAlbum(
     @ColumnInfo(name = "visibility") val visibility: UserVisibility,
 )
 
-@Entity(tableName = "photos_in_albums", primaryKeys = ["photo_id", "album_id"])
+@Entity(
+    tableName = "photos_in_albums",
+    primaryKeys = ["photo_id", "album_id"]
+)
 data class PhotosAndAlbumCross(
-    @PrimaryKey(autoGenerate = true) val id: String,
-    @ColumnInfo(name = "photo_id") val photoId: Int,
-    @ColumnInfo(name = "album_id") val albumId: Int,
+    @ColumnInfo(name = "photo_id", index = true) val photoId: String,
+    @ColumnInfo(name = "album_id", index = true) val albumId: String,
 )
 
 @Entity(tableName = "photo_tags")
 data class PhotoAndTags(
-    @PrimaryKey(autoGenerate = true) val id: String,
+    @PrimaryKey(autoGenerate = true) val id: Int,
     @ColumnInfo(name = "photo_id") val photoId: Int,
     @ColumnInfo(name = "tag") val tag: String,
 )
@@ -75,13 +77,4 @@ data class AlbumWithPhotos(
         associateBy = Junction(PhotosAndAlbumCross::class)
     )
     val photos: List<Photo>,
-)
-
-data class PhotoWithTags(
-    @Embedded val photo: Photo,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "photo_id"
-    )
-    val tags: List<String>,
 )

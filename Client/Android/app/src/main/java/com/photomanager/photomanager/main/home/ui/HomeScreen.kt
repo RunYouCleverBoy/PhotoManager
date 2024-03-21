@@ -1,4 +1,4 @@
-package com.photomanager.photomanager.main.home
+package com.photomanager.photomanager.main.home.ui
 
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
@@ -29,7 +29,7 @@ fun HomeScreen(onClicked: (Uri) -> Unit) {
 
     val state by vm.state.collectAsState()
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        NavHost(navController = rememberNavController(), startDestination = MainNavPath.HomeFootage.navTemplate) {
+        NavHost(modifier = Modifier.weight(1f), navController = rememberNavController(), startDestination = MainNavPath.HomeFootage.navTemplate) {
             composable(MainNavPath.HomeFootage.navTemplate) {
                 FootageScreen(state.footage, vm::dispatchEvent)
             }
@@ -39,7 +39,9 @@ fun HomeScreen(onClicked: (Uri) -> Unit) {
             }
         }
 
-        HomeTabs(state) { vm.dispatchEvent(HomeEvent.OnTabSelected(it)) }
+        HomeTabs(
+            state.tabDescriptors,
+            state.currentMode) { vm.dispatchEvent(HomeEvent.OnTabSelected(it)) }
     }
 }
 

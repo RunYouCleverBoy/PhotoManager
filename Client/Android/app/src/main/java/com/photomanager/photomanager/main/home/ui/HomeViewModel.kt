@@ -1,7 +1,9 @@
-package com.photomanager.photomanager.main.home
+package com.photomanager.photomanager.main.home.ui
 
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import com.photomanager.photomanager.main.home.LazyBulk
+import com.photomanager.photomanager.main.home.model.SearchCriteria
 import com.photomanager.photomanager.main.home.model.WorkflowStage
 import com.photomanager.photomanager.main.home.repository.PhotoRepo
 import com.photomanager.photomanager.mvi.MVIViewModel
@@ -19,9 +21,19 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val photoRepo: PhotoRepo,
+    private val homeTabRepo: HomeTabRepo
 ) : MVIViewModel<HomeState, HomeEvent, HomeAction>(HomeState()) {
     private val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.ROOT)
     private val defaultPhotoDate = Date(GregorianCalendar(2000, 1, 1).timeInMillis)
+
+    init {
+        stateMutable.update { state -> state.copy(
+            tabDescriptors = homeTabRepo.getTabs(),
+            currentMode = WorkflowStage.FOOTAGE,
+            footageSearchCriteria = SearchCriteria(stage = WorkflowStage.FOOTAGE),
+            collectionSearchCriteria = SearchCriteria(stage = WorkflowStage.COLLECTION)
+        ) }
+    }
 
     override fun dispatchEvent(event: HomeEvent) {
         when (event) {
@@ -50,8 +62,8 @@ class HomeViewModel @Inject constructor(
             ) { ImageUIDescriptor.Loading }
             stateMutable.update { state ->
                 when (stage) {
-                    WorkflowStage.FOOTAGE -> state.copy(footage = newLazyBulk)
-                    WorkflowStage.COLLECTION -> state.copy(collection = newLazyBulk)
+                    WorkflowStage.FOOTAGE -> state.copy(currentMode = stage, footage = newLazyBulk)
+                    WorkflowStage.COLLECTION -> state.copy(currentMode = stage, collection = newLazyBulk)
                 }
             }
         }

@@ -1,19 +1,20 @@
 package com.photomanager.photomanager.main.home.db.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.photomanager.photomanager.main.home.db.AlbumWithPhotos
 import com.photomanager.photomanager.main.home.db.Photo
-import com.photomanager.photomanager.main.home.db.PhotoWithTags
+import com.photomanager.photomanager.main.home.db.PhotoAndTags
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PhotoDao {
     @Transaction
-    @Query("SELECT * FROM photo_albums")
+    @Query("SELECT * FROM photo_albums WHERE album_id = :albumId")
     fun getPhotosByAlbum(albumId: Long): Flow<List<AlbumWithPhotos>>
 
     @Query("SELECT * FROM photos WHERE owner = :owner")
@@ -81,7 +82,7 @@ interface PhotoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPhotos(photos: List<Photo>)
 
-    @Query("DELETE FROM photos WHERE id = :photoId")
+    @Query("DELETE FROM photos WHERE photo_id = :photoId")
     suspend fun deletePhoto(photoId: String)
 
     @Query("INSERT INTO photos_in_albums (album_id, photo_id) VALUES (:albumId, :photoId)")
@@ -90,12 +91,18 @@ interface PhotoDao {
     @Query("DELETE FROM photos_in_albums WHERE album_id = :albumId AND photo_id = :photoId")
     suspend fun removePhotoFromAlbum(albumId: String, photoId: String)
 
-    @Query("SELECT * FROM photos WHERE id = :photoId")
-    fun getTagsByPhoto(photoId: String): Flow<PhotoWithTags>
+    @Query("SELECT tag FROM photo_tags WHERE photo_id = :photoId ORDER BY tag")
+    suspend fun getTagsByPhoto(photoId: String): List<String>
 
-    @Query("SELECT P.* FROM photos as P JOIN photo_tags as T ON T.photo_id == P.id WHERE T.tag LIKE '%'||:tag||'%'")
-    fun getPhotosByTag(tag: String): Flow<List<Photo>>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun addTagToPhoto(photoAndTags: PhotoAndTags)
 
-    @Query("SELECT * FROM photos WHERE id IN (:ids)")
+    @Delete
+    suspend fun removeTagFromPhoto(photoAndTags: PhotoAndTags)
+
+    @Query("SELECT P.* FROM photos as P JOIN photo_tags as T ON T.photo_id == P.photo_id WHERE T.tag LIKE '%'||:tag||'%'")
+    suspend fun getPhotosByTag(tag: String): List<Photo>
+
+    @Query("SELECT * FROM photos WHERE photo_id IN (:ids)")
     suspend fun getPhotosByIds(ids: List<String>): List<Photo>
 }

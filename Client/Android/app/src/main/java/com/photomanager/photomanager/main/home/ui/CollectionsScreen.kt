@@ -1,6 +1,8 @@
-package com.photomanager.photomanager.main.home
+package com.photomanager.photomanager.main.home.ui
 
 import androidx.compose.runtime.Composable
+import com.photomanager.photomanager.main.home.LazyBulk
+import com.photomanager.photomanager.main.home.PhotoGrid
 
 @Composable
 fun CollectionsScreen(

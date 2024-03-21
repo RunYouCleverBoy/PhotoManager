@@ -20,7 +20,7 @@ fun ImagePicker(onPick: (List<Uri>?) -> Unit) {
             if (SdkExtensions.getExtensionVersion(Build.VERSION_CODES.R) >= 2) {
                 MediaStore.getPickImagesMaxLimit()
             } else {
-                1
+                100
             }
         }
     }

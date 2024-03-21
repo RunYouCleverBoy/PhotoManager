@@ -1,6 +1,7 @@
-package com.photomanager.photomanager.main.home
+package com.photomanager.photomanager.main.home.ui
 
 import android.net.Uri
+import com.photomanager.photomanager.main.home.LazyBulk
 import com.photomanager.photomanager.main.home.model.SearchCriteria
 import com.photomanager.photomanager.main.home.model.WorkflowStage
 
@@ -12,6 +13,7 @@ sealed class ImageUIDescriptor {
 data class HomeState(
     val isBusy: Boolean = false,
     val pickerOn: Boolean = false,
+    val tabDescriptors: List<HomeTabRepo.TabDescriptor> = emptyList(),
     val currentMode: WorkflowStage = WorkflowStage.FOOTAGE,
     val footage: LazyBulk<ImageUIDescriptor> = LazyBulk(cachedSize = 1000) { ImageUIDescriptor.Loading },
     val collection: LazyBulk<ImageUIDescriptor> = LazyBulk(cachedSize = 1000) { ImageUIDescriptor.Loading },

@@ -1,3 +1,5 @@
+package com.photomanager.photomanager.main.home.repository
+
 import android.net.Uri
 import com.photomanager.photomanager.main.home.api.ImagesApi
 import com.photomanager.photomanager.main.home.db.dao.PhotoDao
@@ -6,8 +8,6 @@ import com.photomanager.photomanager.main.home.db.mappers.toPhoto
 import com.photomanager.photomanager.main.home.model.ImageDescriptor
 import com.photomanager.photomanager.main.home.model.SearchCriteria
 import com.photomanager.photomanager.main.home.model.WorkflowStage
-import com.photomanager.photomanager.main.home.repository.ImageProcessorRepo
-import com.photomanager.photomanager.main.home.repository.PhotoRepo
 import com.photomanager.photomanager.utils.size
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

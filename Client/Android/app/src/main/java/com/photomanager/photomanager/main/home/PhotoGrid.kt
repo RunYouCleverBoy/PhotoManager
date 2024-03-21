@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.photomanager.photomanager.R
+import com.photomanager.photomanager.main.home.ui.ImageUIDescriptor
 import timber.log.Timber
 
 @Composable

@@ -10,7 +10,7 @@ import androidx.navigation.navArgument
 import com.photomanager.photomanager.main.MainAction
 import com.photomanager.photomanager.main.MainEvent
 import com.photomanager.photomanager.main.MainViewModel
-import com.photomanager.photomanager.main.home.HomeScreen
+import com.photomanager.photomanager.main.home.ui.HomeScreen
 import com.photomanager.photomanager.main.photoscreen.PhotoDetailScreen
 import com.photomanager.photomanager.splash.PhotoSplashScreen
 
@@ -21,7 +21,7 @@ fun MainNav(navController: NavHostController, startDestination: String) {
         mainViewModel.action.collect { action -> navController.renderAction(action) }
     }
     NavHost(navController = navController, startDestination = startDestination, builder = {
-        composable(MainNavPath.Splash.navTemplate) { backstackEntry ->
+        composable(MainNavPath.Splash.navTemplate) {
             PhotoSplashScreen { mainViewModel.dispatchEvent(MainEvent.OnSplashComplete) }
         }
         composable(MainNavPath.Home.navTemplate) {
