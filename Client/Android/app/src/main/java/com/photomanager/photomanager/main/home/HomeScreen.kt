@@ -39,16 +39,7 @@ fun HomeScreen(onClicked: (Uri) -> Unit) {
             }
         }
 
+        HomeTabs(state) { vm.dispatchEvent(HomeEvent.OnTabSelected(it)) }
     }
-}
-
-@Composable
-fun CollectionsScreen(
-    collection: List<ImageUIDescriptor>,
-    dispatchEvent: (HomeEvent) -> Unit
-) {
-    PhotoGrid(collection, onApproachingWindowEnd = {
-        dispatchEvent(HomeEvent.OnApproachingCollectionWindowEnd)
-    }) { dispatchEvent(HomeEvent.OnImageClicked(it)) }
 }
 

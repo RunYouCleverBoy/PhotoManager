@@ -10,6 +10,8 @@ import com.photomanager.photomanager.main.home.ktor.KtorFactory
 import com.photomanager.photomanager.main.home.repository.ImageProcessorRepo
 import com.photomanager.photomanager.main.home.repository.ImageProcessorRepoImpl
 import com.photomanager.photomanager.main.home.repository.PhotoRepo
+import com.photomanager.photomanager.utils.GeoLocationUtils
+import com.photomanager.photomanager.utils.GeoLocationUtilsImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -31,6 +33,9 @@ abstract class HomeProvider {
 
     @Binds
     abstract fun provideServerApi(serverApi: ImagesApiImpl): ImagesApi
+
+    @Binds
+    abstract fun provideGeoLocationUtils(geoLocationUtils: GeoLocationUtilsImpl): GeoLocationUtils
 
     @Provides
     fun providePhotoDao(databaseHolder: DatabaseHolder): PhotoDao =

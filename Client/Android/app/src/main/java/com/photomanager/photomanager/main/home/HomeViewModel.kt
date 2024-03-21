@@ -1,76 +1,125 @@
 package com.photomanager.photomanager.main.home
 
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
-import com.photomanager.photomanager.main.home.repository.ImageProcessorRepo
+import com.photomanager.photomanager.main.home.model.WorkflowStage
 import com.photomanager.photomanager.main.home.repository.PhotoRepo
 import com.photomanager.photomanager.mvi.MVIViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.GregorianCalendar
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val photoRepo: PhotoRepo,
-    private val imageProcessorRepo: ImageProcessorRepo
 ) : MVIViewModel<HomeState, HomeEvent, HomeAction>(HomeState()) {
+    private val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.ROOT)
+    private val defaultPhotoDate = Date(GregorianCalendar(2000, 1, 1).timeInMillis)
+
     override fun dispatchEvent(event: HomeEvent) {
         when (event) {
             is HomeEvent.OnImageClicked -> emit(HomeAction.OpenImage(event.uri))
             is HomeEvent.OnImagesPicked -> addToFootage(event)
             is HomeEvent.OnAddToCollection -> addToCollection(event.ids)
+            is HomeEvent.OnTabSelected -> onTabSelected(event.stage)
+            is HomeEvent.OnFootageAboutToMiss -> onMiss(event.index, WorkflowStage.FOOTAGE)
+            is HomeEvent.OnCollectionAboutToMiss -> onMiss(event.index, WorkflowStage.COLLECTION)
+        }
+    }
 
-            HomeEvent.OnApproachingFootageWindowEnd -> appendMoreData(toCollection = false)
-            HomeEvent.OnApproachingCollectionWindowEnd -> appendMoreData(toCollection = true)
+    private fun onTabSelected(stage: WorkflowStage) {
+        if (state.value.isBusy) return
+        markBusy(true)
+        viewModelScope.launch {
+            val count = photoRepo.getSize(
+                when (stage) {
+                    WorkflowStage.FOOTAGE -> state.value.footageSearchCriteria
+                    WorkflowStage.COLLECTION -> state.value.collectionSearchCriteria
+                }
+            )
+            val newLazyBulk = LazyBulk<ImageUIDescriptor>(
+                totalRunSize = count,
+                cachedSize = 1000
+            ) { ImageUIDescriptor.Loading }
+            stateMutable.update { state ->
+                when (stage) {
+                    WorkflowStage.FOOTAGE -> state.copy(footage = newLazyBulk)
+                    WorkflowStage.COLLECTION -> state.copy(collection = newLazyBulk)
+                }
+            }
         }
     }
 
     private fun addToCollection(ids: List<String>) {
+        markBusy(true)
         viewModelScope.launch {
-            val idSet = ids.toSet()
-            photoRepo.add(state.value.footage.filter {
-                it.id !in idSet
-            }.map { it.id })
-        }
+            photoRepo.addToCollection(ids)
+        }.invokeOnCompletion { markBusy(false) }
     }
 
     private fun addToFootage(event: HomeEvent.OnImagesPicked) {
+        markBusy(true)
         viewModelScope.launch {
-            photoRepo
+            photoRepo.importPhotos(event.uris, WorkflowStage.FOOTAGE)
+        }.invokeOnCompletion { markBusy(false) }
+    }
+
+    private fun onMiss(index: Int, flowStage: WorkflowStage) {
+        if (state.value.isBusy) return
+        markBusy(true)
+        val range = IntRange(index, index + PAGE_SIZE)
+        val searchCriteria = when (flowStage) {
+            WorkflowStage.FOOTAGE -> state.value.footageSearchCriteria
+            WorkflowStage.COLLECTION -> state.value.collectionSearchCriteria
+        }
+
+        viewModelScope.launch {
+            photoRepo.getPhotosByCriteria(searchCriteria, range).collect { lst ->
+                val newItems = withContext(Dispatchers.IO) {
+                    lst.map { photo ->
+                        ImageUIDescriptor.Data(
+                            photo.id,
+                            Uri.parse(photo.url),
+                            photo.metadata.description?.takeIf { it.isNotBlank() }
+                                ?: dateFormatter.format(
+                                    photo.metadata.shotDate ?: defaultPhotoDate
+                                ))
+                    }
+                }
+
+                populateDataWithNewItems(flowStage, newItems)
+            }
+        }.invokeOnCompletion {
+            markBusy(false)
         }
     }
 
-    private fun appendMoreData(toCollection: Boolean) {
-        if (state.value.isBusy) return
-        stateMutable.update { state -> state.copy(isBusy = true) }
-        val curr = if (toCollection) state.value.collection else state.value.footage
-        val size = curr.size
-        val range = IntRange(size, size + PAGE_SIZE)
-        val searchCriteria = if (toCollection) state.value.collectionSearchCriteria else state.value.footageSearchCriteria
-        val repo = if (toCollection) {
-            imagesRepo.collection
-        } else {
-            imagesRepo.footage
-        }
-        viewModelScope.launch {
-            val count = repo.getSize(searchCriteria)
-            if (count == 0) {
-                return@launch
+    private fun populateDataWithNewItems(
+        flowStage: WorkflowStage,
+        newItems: List<ImageUIDescriptor.Data>
+    ) {
+        stateMutable.update { state ->
+            when (flowStage) {
+                WorkflowStage.FOOTAGE -> state.copy(
+                    footage = state.footage.copy(withAddedData = newItems)
+                )
+
+                WorkflowStage.COLLECTION -> state.copy(
+                    collection = state.collection.copy(withAddedData = newItems)
+                )
             }
-            repo.get(searchCriteria, range).collect { lst ->
-                val ids = curr.map { it.id }.toSet()
-                val mapped = lst
-                    .filter { it.id !in ids }
-                    .map { ImageUIDescriptor(it.id, it.uri, it.caption) }
-                if (toCollection) {
-                    stateMutable.update { state -> state.copy(collection = state.collection + mapped) }
-                } else {
-                    stateMutable.update { state -> state.copy(footage = state.footage + mapped) }
-                }
-            }
-        }.invokeOnCompletion {
-            stateMutable.update { state -> state.copy(isBusy = false) }
         }
+    }
+
+    private fun markBusy(busy: Boolean) {
+        stateMutable.update { state -> state.copy(isBusy = busy) }
     }
 
     companion object {

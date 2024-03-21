@@ -49,6 +49,32 @@ interface PhotoDao {
         limit: Int
     ): List<Photo>
 
+    @Query(
+        "SELECT COUNT() FROM photos WHERE " +
+                "(shot_date BETWEEN :shotAfter AND :shotBefore) " +
+                "AND (:camera IS NULL OR camera LIKE '%'||:camera||'%') " +
+                "AND (:description IS NULL OR exposure LIKE '%'||:description||'%')" +
+                "AND (:place IS NULL OR name LIKE '%'||:place||'%' OR city LIKE '%'||:place||'%' OR country LIKE '%'||:place||'%') " +
+                "AND (:workflowStage IS NULL OR workflow_stage LIKE '%'||:workflowStage||'%') " +
+                "AND (latitude BETWEEN :minLatitude AND :maxLatitude) " +
+                "AND (longitude BETWEEN :minLongitude AND :maxLongitude) " +
+                "AND (upvote_grade BETWEEN :gradeAtLeast AND :gradeAtMost) "
+    )
+    suspend fun getPhotosCount(
+        shotBefore: Long,
+        shotAfter: Long,
+        camera: String?,
+        description: String?,
+        place: String?,
+        workflowStage: String?,
+        gradeAtLeast: Int,
+        gradeAtMost: Int,
+        minLatitude: Double,
+        maxLatitude: Double,
+        minLongitude: Double,
+        maxLongitude: Double,
+    ): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertPhoto(photo: Photo)
 
@@ -69,4 +95,7 @@ interface PhotoDao {
 
     @Query("SELECT P.* FROM photos as P JOIN photo_tags as T ON T.photo_id == P.id WHERE T.tag LIKE '%'||:tag||'%'")
     fun getPhotosByTag(tag: String): Flow<List<Photo>>
+
+    @Query("SELECT * FROM photos WHERE id IN (:ids)")
+    suspend fun getPhotosByIds(ids: List<String>): List<Photo>
 }

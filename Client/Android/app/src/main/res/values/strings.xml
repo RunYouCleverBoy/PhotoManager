@@ -4,4 +4,7 @@
     <string name="open_picker">Open picker</string>
     <string name="grid_content_description">Image number %d</string>
     <string name="zoomed_image">Zoomed_image</string>
+    <string name="loading">Loading</string>
+    <string name="footage">Footage</string>
+    <string name="collection">Collection</string>
 </resources>

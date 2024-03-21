@@ -17,3 +17,8 @@ data class Comments(val comments: List<Comment>)
 
 @Serializable
 data class UserVisibility(@SerialName("userIds") val userIds: List<String>)
+
+enum class WorkFlowStage(val value: String) {
+    FOOTAGE("footage"),
+    COLLECTION("collection")
+}

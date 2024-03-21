@@ -2,6 +2,7 @@ package com.photomanager.photomanager.main.home
 
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,18 +24,19 @@ import timber.log.Timber
 
 @Composable
 fun PhotoGrid(
-    imagesForGrid: List<ImageUIDescriptor>,
+    imagesForGrid: LazyBulk<ImageUIDescriptor>,
     pageSize : Int = 100,
     onApproachingWindowEnd: (Int) -> Unit = {},
     onImageClicked: (Uri) -> Unit = {}
 ) {
     LazyVerticalGrid(modifier = Modifier.fillMaxSize(), columns = GridCells.Fixed(3)) {
-        items(imagesForGrid.size) { index ->
+        items(imagesForGrid.totalRunSize) { index ->
             val imageDescriptor = imagesForGrid[index]
-            LaunchedEffect(index / pageSize) {
-                if (index > imagesForGrid.size - pageSize) {
-                    onApproachingWindowEnd(index)
+            LaunchedEffect(index / (pageSize / 4)) {
+                if (imagesForGrid.lookAhead(index = index, peekSize = pageSize / 2)) {
+                    return@LaunchedEffect
                 }
+                onApproachingWindowEnd(index)
             }
             Column(
                 modifier = Modifier
@@ -42,6 +44,10 @@ fun PhotoGrid(
                     .height(200.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                if (imageDescriptor !is ImageUIDescriptor.Data) {
+                    return@Column PlaceHolder()
+                }
+
                 val uri = imageDescriptor.uri
                 AsyncImage(
                     modifier = Modifier
@@ -60,5 +66,12 @@ fun PhotoGrid(
                 Text(text = imageDescriptor.caption, modifier = Modifier.fillMaxWidth())
             }
         }
+    }
+}
+
+@Composable
+private fun PlaceHolder() {
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Text(stringResource(id = R.string.loading))
     }
 }

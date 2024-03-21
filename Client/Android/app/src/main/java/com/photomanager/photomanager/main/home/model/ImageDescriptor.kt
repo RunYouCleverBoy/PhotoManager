@@ -3,35 +3,36 @@ package com.photomanager.photomanager.main.home.model
 data class ImageDescriptor(
     val id: String,
     val url: String,
-    val isPublic: Boolean,
-    val owner: String,
-    val visibleTo: List<String>,
-    val metadata: PhotoMetadata,
-    val workFlow: WorkFlow,
-    val similarTo: List<String>,
-    val ancestor: String,
-    val comments: List<Comment>,
-    val tags: List<String>
+    val isPublic: Boolean = false,
+    val owner: String = "",
+    val visibleTo: List<String> = emptyList(),
+    val metadata: PhotoMetadata = PhotoMetadata(),
+    val workFlow: WorkFlow = WorkFlow(),
+    val similarTo: List<String> = emptyList(),
+    val ancestor: String = "",
+    val comments: List<Comment> = emptyList(),
+    val tags: List<String> = emptyList()
 )
 
 data class PhotoMetadata(
-    val shotDate: Long?,
-    val modifiedDate: Long?,
-    val camera: String?,
-    val place: Place?,
-    val exposure: String?,
-    val fNumber: Float?,
-    val iso: Int?,
-    val description: String?
+    val shotDate: Long? = null,
+    val modifiedDate: Long? = null,
+    val camera: String? = null,
+    val place: Place? = null,
+    val exposure: String? = null,
+    val fNumber: Float? = null,
+    val iso: Int? = null,
+    val description: String? = null
 )
 
 data class WorkFlow(
-    val upvoteGrade: Int,
-    val workflowStage: WorkflowStage,
-    val albums: List<String>
+    val upvoteGrade: Int = 0,
+    val workflowStage: WorkflowStage = WorkflowStage.FOOTAGE,
+    val albums: List<String> = emptyList()
 )
 
 data class Comment(
+    val commentId: String,
     val commenterID: String,
     val commenterName: String,
     val comment: String,
