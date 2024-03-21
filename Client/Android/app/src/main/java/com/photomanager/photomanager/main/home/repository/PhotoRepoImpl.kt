@@ -88,7 +88,7 @@ class PhotoRepoImpl @Inject constructor(
         val photos = photoDao.getPhotosByIds(ids)
         val convertedPhotos = photos.map { photo ->
             photo.copy(
-                id = imageProcessorRepo.idForPhoto(photo, WorkflowStage.COLLECTION),
+                id = imageProcessorRepo.idForPhoto(photo.id, photo.url, WorkflowStage.COLLECTION),
                 flow = photo.flow.copy(workflowStage = DbWorkFlowStage.COLLECTION.value)
             )
         }

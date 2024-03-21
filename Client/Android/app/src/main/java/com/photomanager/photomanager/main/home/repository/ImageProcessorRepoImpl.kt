@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
 import androidx.exifinterface.media.ExifInterface
-import com.photomanager.photomanager.main.home.db.Photo
 import com.photomanager.photomanager.main.home.model.ImageDescriptor
 import com.photomanager.photomanager.main.home.model.PhotoMetadata
 import com.photomanager.photomanager.main.home.model.Place
@@ -62,7 +61,7 @@ class ImageProcessorRepoImpl @Inject constructor(
         }
 
         return ImageDescriptor(
-            id = idForPhoto(null, asWorkflowStage),
+            id = idForPhoto(imageQuery?.documentId, uri.toString(), asWorkflowStage),
             url = uri.toString(),
             metadata = PhotoMetadata(
                 shotDate = (dateStr?.parseDateTime() ?: Date()).time,
@@ -84,12 +83,11 @@ class ImageProcessorRepoImpl @Inject constructor(
         )
     }
 
-    override fun idForPhoto(photo: Photo?, collection: WorkflowStage): String {
+    override fun idForPhoto(photoId: String?, photoUri: String?, collection: WorkflowStage): String {
         val id = when {
-            photo == null -> UUID.randomUUID().toString()
-            photo.id.length >= 10 -> photo.id.substring(1)
-            photo.url.isNotBlank() -> UUID.fromString(photo.url).toString()
-            else -> UUID.randomUUID().toString()
+            photoId != null && photoId.length >= 10 -> photoId.substring(1)
+            !photoUri.isNullOrBlank() -> UUID.fromString(photoUri).toString()
+            else -> throw IllegalArgumentException("Photo must have an id or a url")
         }
         return when (collection) {
             WorkflowStage.FOOTAGE -> "f$id"
