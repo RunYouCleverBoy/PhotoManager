@@ -4,6 +4,7 @@ import android.net.Uri
 import com.photomanager.photomanager.main.home.LazyBulk
 import com.photomanager.photomanager.main.home.model.SearchCriteria
 import com.photomanager.photomanager.main.home.model.WorkflowStage
+import com.photomanager.photomanager.main.nav.MainNavPath
 
 sealed class ImageUIDescriptor {
     data class Data(val id: String, val uri: Uri, val caption: String) : ImageUIDescriptor()
@@ -32,4 +33,5 @@ sealed class HomeEvent {
 
 sealed class HomeAction {
     data class OpenImage(val uri: Uri) : HomeAction()
+    data class NavigateTo(val path: MainNavPath) : HomeAction()
 }

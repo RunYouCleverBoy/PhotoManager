@@ -2,6 +2,7 @@ package com.photomanager.photomanager.main
 
 import com.photomanager.photomanager.main.nav.MainNavPath
 import com.photomanager.photomanager.mvi.MVIViewModel
+import com.photomanager.photomanager.utils.encode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -15,10 +16,11 @@ class MainViewModel @Inject constructor() :
             }
 
             is MainEvent.OnPhotoOpenRequest -> {
-                val path = MainNavPath.PhotoDetail.navTemplate.replace("{uri}", event.uri.toString())
+                val path = MainNavPath.PhotoDetail.navTemplate.replace("{uri}", event.uri.encode())
                 emit(MainAction.NavigateTo(path))
             }
         }
     }
 }
+
 

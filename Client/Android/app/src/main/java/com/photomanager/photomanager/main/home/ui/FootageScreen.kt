@@ -33,7 +33,7 @@ fun FootageScreen(
         }
 
         if (pickerShown) {
-            ImagePicker { uris ->
+            ImagePicker(persistUris = true) { uris ->
                 if (!uris.isNullOrEmpty()) {
                     dispatchEvent(HomeEvent.OnImagesPicked(uris))
                 }

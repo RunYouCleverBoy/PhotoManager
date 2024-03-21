@@ -32,7 +32,8 @@ fun MainNav(navController: NavHostController, startDestination: String) {
         composable(MainNavPath.PhotoDetail.navTemplate, arguments = listOf(
             navArgument("uri") { defaultValue = "http://NoArg" }
         )) {
-            PhotoDetailScreen(uri = it.arguments?.getString("uri") ?: "http://NULLLLLLL")
+            val uri = it.arguments?.getString("uri") ?: "http://NULLLLLLL"
+            PhotoDetailScreen(uri = uri)
         }
     })
 }

@@ -31,29 +31,21 @@ class LazyBulk<T> private constructor(
 
     operator fun get(index: Int): T = lru.get(index) ?: onMiss.invoke(index)
 
-    operator fun set(index: Int, value: T): T = lru.put(index, value)
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun copy(
-        totalRunSize: Int = this.totalRunSize,
-        cachedSize: Int = this.cachedSize,
-        onEvicted: ((index: Int, oldVal: T) -> Unit)? = this.onEvicted,
-        onMiss: (Int) -> T = this.onMiss
-    ) = LazyBulk(
-        totalRunSize,
-        cachedSize,
-        onEvicted,
-        onMiss,
-        lru
-    )
-
-    fun copy(withAddedData: Collection<T>, totalRunSize: Int = this.totalRunSize) =
-        copy(totalRunSize = totalRunSize).apply {
-            putBulk(windowAround(totalRunSize, withAddedData.size), withAddedData)
+    fun copy(withAddedData: Collection<T>, startingIndex: Int, totalRunSize: Int = this.totalRunSize): LazyBulk<T> {
+        val snapshot = lru.snapshot()
+        for ((index, value) in withAddedData.withIndex()) {
+            snapshot[startingIndex + index] = value
         }
-
-    private fun putBulk(index: IntRange, values: Collection<T>): Unit =
-        values.forEachIndexed { i, value -> lru.put(index.first + i, value) }
+        return LazyBulk(
+            totalRunSize = totalRunSize,
+            cachedSize = cachedSize,
+            onEvicted = onEvicted,
+            onMiss = onMiss,
+            lru = LRU(cachedSize, onEvicted).apply { snapshot.forEach{
+                put(it.key, it.value)
+            } }
+        )
+    }
 
     fun lookAhead(index: Int, peekSize: Int): Boolean {
         val peekRange = windowAround(index, peekSize)

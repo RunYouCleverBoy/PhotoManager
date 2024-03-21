@@ -9,6 +9,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import javax.inject.Inject
 
@@ -22,13 +24,18 @@ class ImagesApiImpl @Inject constructor(
             .buildUpon()
             .appendPath("photos")
             .build().toString()
-        val result = client.post(urlString) {
-            setBody(searchCriteria.toPhotoSearchOptions())
-        }
+        return try {
+            val result = client.post(urlString) {
+                contentType(ContentType.Application.Json)
+                setBody(searchCriteria.toPhotoSearchOptions())
+            }
 
-        return if (result.status.isSuccess()) {
-            result.body() ?: emptyList()
-        } else {
+            if (result.status.isSuccess()) {
+                result.body() ?: emptyList()
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
             emptyList()
         }
     }

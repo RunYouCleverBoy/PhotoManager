@@ -14,6 +14,8 @@ fun PhotoDetailScreen(uri: String) {
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
         ZoomableAsyncImage(
             modifier = Modifier.fillMaxSize(),
-            model = uri, contentDescription = stringResource(id = R.string.zoomed_image))
+            model = uri,
+            contentDescription = stringResource(id = R.string.zoomed_image),
+        )
     }
 }

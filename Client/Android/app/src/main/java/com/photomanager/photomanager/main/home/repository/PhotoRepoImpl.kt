@@ -27,26 +27,34 @@ class PhotoRepoImpl @Inject constructor(
         range: IntRange
     ): Flow<List<ImageDescriptor>> =
         flow {
-            val photos = photoDao.getPhotosByMetadata(
-                shotBefore = searchCriteria.dateRange.last,
-                shotAfter = searchCriteria.dateRange.first,
-                camera = searchCriteria.camera,
-                description = searchCriteria.descriptionIncludes,
-                place = searchCriteria.locationNameContains,
-                workflowStage = searchCriteria.stage?.name,
-                gradeAtLeast = searchCriteria.rating?.first ?: -1000,
-                gradeAtMost = searchCriteria.rating?.last ?: 1000,
-                minLatitude = searchCriteria.latitudeRange.start,
-                maxLatitude = searchCriteria.latitudeRange.endInclusive,
-                minLongitude = searchCriteria.longitudeRange.start,
-                maxLongitude = searchCriteria.longitudeRange.endInclusive,
-                offset = range.first,
-                limit = range.size
-            ).map { it.toImageDescriptor() }
+            val photos = queryDbBySearchCriteria(searchCriteria, range)
             emit(photos)
             val serverData = photoApi.search(searchCriteria)
-            emit(serverData)
+            val serverPhotos = serverData.map{it.toPhoto()}
+            photoDao.insertPhotos(serverPhotos)
+            val photosWithServer = queryDbBySearchCriteria(searchCriteria, range)
+            emit(photosWithServer)
         }
+
+    private suspend fun queryDbBySearchCriteria(
+        searchCriteria: SearchCriteria,
+        range: IntRange
+    ) = photoDao.getPhotosByMetadata(
+        shotBefore = searchCriteria.dateRange.last,
+        shotAfter = searchCriteria.dateRange.first,
+        camera = searchCriteria.camera,
+        description = searchCriteria.descriptionIncludes,
+        place = searchCriteria.locationNameContains,
+        workflowStage = searchCriteria.stage?.name,
+        gradeAtLeast = searchCriteria.rating?.first ?: -1000,
+        gradeAtMost = searchCriteria.rating?.last ?: 1000,
+        minLatitude = searchCriteria.latitudeRange.start,
+        maxLatitude = searchCriteria.latitudeRange.endInclusive,
+        minLongitude = searchCriteria.longitudeRange.start,
+        maxLongitude = searchCriteria.longitudeRange.endInclusive,
+        offset = range.first,
+        limit = range.size
+    ).map { it.toImageDescriptor() }
 
     override suspend fun importPhotos(photos: List<Uri>, footage: WorkflowStage) {
         val imageDescriptors = withContext(Dispatchers.IO) {
